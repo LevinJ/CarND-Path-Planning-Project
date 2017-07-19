@@ -238,6 +238,13 @@ int main() {
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
 
+          	cout<<"state: "<<car_x<<","<<car_y<<","<< car_s<<","<<car_d<<endl;
+          	vector<double> xy = getXY(car_s, car_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          	cout<<xy[0]<<","<<xy[1]<<endl;
+          	vector<double> sd = getFrenet(car_x, car_y, car_yaw, map_waypoints_x, map_waypoints_y);
+          	cout<<sd[0]<<","<<sd[1]<<endl;
+
+
 
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
           	msgJson["next_x"] = next_x_vals;
