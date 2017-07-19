@@ -4,3 +4,5 @@
 build/
 simulator/
 .pydevproject
+*.pyc
+.DS_Store
