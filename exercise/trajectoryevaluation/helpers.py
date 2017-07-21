@@ -119,22 +119,33 @@ def show_trajectory(s_coeffs, d_coeffs, T, vehicle=None):
             X2.append(s_)
             Y2.append(d_)
         t += 0.25
-    plt.scatter(X,Y,color="blue")
+    sdc_plt = plt.scatter(X,Y,label="sdc",color="blue")
     if vehicle:
-        plt.scatter(X2, Y2,color="red")
+        vehicle_plt = plt.scatter(X2, Y2, color="green", label="target_vehicle")
+    
+    plt.legend()
     show_end_state(s_coeffs, d_coeffs, T)
     
     plt.figure()
     t = 0
     t_list = []
     s_list = []
+    d_list = []
     while t <= T+0.01:
         t_list.append(t)
         s_list.append(s(t))
+        d_list.append(d(t))
         t += 0.25
-    plt.plot(t_list, s_list)
+    plt.plot(t_list, s_list, label="sdc")
+    plt.plot(t_list, X2,label="target_vehicle")
+    plt.legend()
     
- 
+    plt.figure()
+    plt.plot(t_list, d_list, label="sdc")
+    plt.plot(t_list, Y2,label="target_vehicle")
+    plt.legend()
+    
+    
 #     plt.gca().set_aspect('equal', adjustable='box')
     plt.show()
 

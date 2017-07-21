@@ -71,6 +71,7 @@ def PTG(start_s, start_d, target_vehicle, delta, T, predictions):
     for goal in all_goals:
         s_goal, d_goal, t = goal
         s_coefficients = JMT(start_s, s_goal, t)
+#         print("start_d: {}, d_goal{}".format(start_d, d_goal))
         d_coefficients = JMT(start_d, d_goal, t)
         trajectories.append(tuple([s_coefficients, d_coefficients, t]))
     
@@ -97,8 +98,9 @@ def perturb_goal(goal_s, goal_d):
         new_s_goal.append(random.gauss(mu, sig))
 
     new_d_goal = []
-    for mu, sig in zip(goal_d, SIGMA_D):
-        new_d_goal.append(random.gauss(mu, sig))
+    new_d_goal = goal_d
+#     for mu, sig in zip(goal_d, SIGMA_D):
+#         new_d_goal.append(random.gauss(mu, sig))
         
     return tuple([new_s_goal, new_d_goal])
 

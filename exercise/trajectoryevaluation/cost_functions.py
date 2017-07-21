@@ -136,7 +136,7 @@ def total_accel_cost(traj, target_vehicle, delta, T, predictions):
     s_d_dot = differentiate(s_dot)
     a = to_equation(s_d_dot)
     all_accs = [a(float(T)/100 * i) for i in range(100)]
-    max_acc = max(all_accs, key=abs)d
+    max_acc = max(all_accs, key=abs)
     if abs(max_acc) > MAX_ACCEL: return 1
     else: return 0
     
