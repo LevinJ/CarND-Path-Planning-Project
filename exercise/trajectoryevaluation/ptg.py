@@ -20,7 +20,8 @@ WEIGHTED_COST_FUNCTIONS = [
     (stays_on_road_cost,    10)
 ]
 
-def PTG(start_s, start_d, target_vehicle, delta, T, predictions):
+
+def PTG(start_s, start_d, T, target_vehicle, delta,  predictions):
     """
     Finds the best trajectory according to WEIGHTED_COST_FUNCTIONS (global).
 
@@ -50,15 +51,17 @@ def PTG(start_s, start_d, target_vehicle, delta, T, predictions):
      best_d gives coefficients for d(t) and best_t gives duration associated w/ 
      this trajectory.
     """
-    target = predictions[target_vehicle]
+    
     # generate alternative goals
     all_goals = []
     timestep = 0.5
     t = T - 4 * timestep
     while t <= T + 4 * timestep:
+        target = predictions[target_vehicle]
         target_state = np.array(target.state_in(t)) + np.array(delta)
         goal_s = target_state[:3]
         goal_d = target_state[3:]
+        
         goals = [(goal_s, goal_d, t)]
         for _ in range(N_SAMPLES):
             perturbed = perturb_goal(goal_s, goal_d)
