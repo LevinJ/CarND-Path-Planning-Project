@@ -33,7 +33,7 @@ def main():
 	    'goal' : GOAL,
 	    'max_acceleration': MAX_ACCEL
 	}
-	road.add_ego(1,30, ego_config)
+	road.add_ego(3,30, ego_config)
 	timestep = 0
 	while road.get_ego().s <= GOAL[0]:
 		timestep += 1

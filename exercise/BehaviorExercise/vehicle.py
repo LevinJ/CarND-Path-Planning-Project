@@ -2,6 +2,7 @@ import math
 class StateTransition(object):
 	def __init__(self, ego):
 		self.ego = ego
+		self.lane_speed_dict = {}
 		return
 	def successor_states(self, current_fsm_state):
 		if current_fsm_state == "CS" or current_fsm_state == "KL":
@@ -15,23 +16,40 @@ class StateTransition(object):
 		if current_fsm_state == "LCR":
 			return ["KL"]
 		raise Exception("unexpected sate")
-	def generate_trajectory(self, state, current_pose, predictions):
-		if state == "KL":
+	def get_lane_speed(self,current_pose, predictions):
+		
+		for lane in ["KL", "left", "right"]:
 			#roughly assuem we will have the same speed as the vehicle in front of us
+			if lane == "KL":
+				target_lane = current_pose.lane
+			if lane == "Left":
+				target_lane = current_pose.lane + 1
+			if lane == "right":
+				target_lane = current_pose.lane - 1
+			in_front = [v for (v_id, v) in predictions.items() if v[0]['lane'] == target_lane and v[0]['s'] > current_pose.s ]
 			
+			if len(in_front) > 0: 
+				leading = min(in_front, key=lambda v: v[0]['s'] - current_pose.s)
+				target_v = leading[1]['s'] - leading[0]['s']
+			else:
+				target_v = self.ego.target_speed
+			
+			self.lane_speed_dict[lane] = target_v
+		return
+	def generate_trajectory(self, state, current_pose, predictions):
+		if state in ["KL","PLCL","PLCR"]:
 			target_lane = current_pose.lane
-			
-		if state == "PLCL" or state == "LCL":
+			target_v = self.lane_speed_dict["KL"]
+		if state == "LCL":
 			target_lane = current_pose.lane + 1
-		if state == "PLCR" or state == "LCR":
+			target_v = self.lane_speed_dict["left"]
+		if state == "LCR":
 			target_lane = current_pose.lane - 1
+			target_v = self.lane_speed_dict["right"]
+		
+		
 			
-		in_front = [v for (v_id, v) in predictions.items() if v[0]['lane'] == target_lane and v[0]['s'] > current_pose.s ]
-		if len(in_front) > 0: 
-			leading = min(in_front, key=lambda v: v[0]['s'] - current_pose.s)
-			target_v = leading[1]['s'] - leading[0]['s']
-		else:
-			target_v = self.ego.target_speed
+		
 		trajectory_for_state = []
 		horizon = 10
 # 		s = current_pose.s
@@ -40,23 +58,33 @@ class StateTransition(object):
 			trajectory_for_state.append({'s':s, 'lane': target_lane})
 			
 		return trajectory_for_state
-	def valid_lane_cost(self,state, trajectory_for_state, predictions):
+	def valid_lane_cost(self,weight, state, trajectory_for_state, predictions):
 		cost = 0
 		lane = trajectory_for_state[0]['lane']
+		if state== "PLCL":
+			lane += 1
+		if state== "PLCR":
+			lane -= 1
 		if lane < 0 or lane >= 4:
 			cost = 1
-		print("valide lane cost: {}".format(cost))
+		print("valid lane cost: {}".format(weight*cost))
 			
 		return cost
-	def prepare_lc_cost(self,state, trajectory_for_state, predictions):
+	def prepare_lc_cost(self,weight, state, trajectory_for_state, predictions):
 		cost = 0;
 		if (self.ego.state in ["PLCL", "PLCR"]) and (state in ["PLCL", "PLCR"]):
 			#give teh vehicle a bit push, so that it has the urge to go from prepare lane change to lane change
 			cost = 0.1
-		print("preapre lc cost: {}".format(cost))
+		print("preapre lc cost: {}".format(weight* cost))
 		return cost
-	def lane_choice_cost(self,state, trajectory_for_state, predictions):
+	def lane_choice_cost(self,weight, state, trajectory_for_state, predictions):
 		lane = trajectory_for_state[0]['lane']
+		if state== "PLCL":
+			lane += 1
+		if state== "PLCR":
+			lane -= 1
+		
+		
 		delta_lane = abs(lane - self.ego.goal_lane)
 		
 		delta_s = self.ego.goal_s - self.ego.s
@@ -65,14 +93,18 @@ class StateTransition(object):
 			cost = 1- math.exp(-delta_lane/float(delta_s))
 		else:
 			cost = (delta_lane)
-		print("lane choice cost: {}".format(cost))
+		print("lane choice cost: {}".format(weight * cost))
 		return cost
-	def target_speed_cost(self,state, trajectory_for_state, predictions):
+	def estimated_speed_cost(self,weight, state, trajectory_for_state, predictions):
 		estimated_spped = trajectory_for_state[1]['s'] - trajectory_for_state[0]['s']
+		if(state == "PLCL"):
+			estimated_spped = self.lane_speed_dict["left"]
+		if(state == "PLCR"):
+			estimated_spped = self.lane_speed_dict["right"]
 		cost = abs(estimated_spped - self.ego.target_speed)/float(self.ego.target_speed)
-		print("target speed cost: {}".format(cost))
+		print("estimated speed cost: {}".format(weight *cost))
 		return cost
-	def collision_cost(self,state, trajectory_for_state, predictions):
+	def collision_cost(self,weight, state, trajectory_for_state, predictions):
 		cost = 0
 		L = 1
 		if state in ["LCL", "LCR"]:
@@ -84,17 +116,18 @@ class StateTransition(object):
 			if len(collided_vehicles)>0:
 				cost = 1;
 		
-		print("collision cost: {}".format(cost))
+		print("collision cost: {}".format(weight* cost))
 		return cost
 		
 	def choose_next_state(self,predictions, current_fsm_state, current_pose):
-		cost_functions = [self.valid_lane_cost, self.collision_cost, self.lane_choice_cost, self.collision_cost, self.prepare_lc_cost, self.target_speed_cost]
-		weights = [1000, 1000, 10, 1, 1, 1]
+		cost_functions = [self.valid_lane_cost, self.collision_cost, self.lane_choice_cost, self.estimated_speed_cost, self.prepare_lc_cost]
+		weights = [1000, 1000, 100, 1,1]
 		next_state = self.transition_function(predictions, current_fsm_state, current_pose, cost_functions, weights)
 		return next_state
 	def transition_function(self, predictions, current_fsm_state, current_pose, cost_functions, weights):
 		# only consider states which can be reached from current FSM state.
 		possible_successor_states = self.successor_states(current_fsm_state)
+		self.get_lane_speed(current_pose, predictions)
 		
 	
 		# keep track of the total cost of each state.
@@ -107,12 +140,13 @@ class StateTransition(object):
 			# calculate the "cost" associated with that trajectory.
 			cost_for_state = 0
 			for i in range(len(cost_functions)) :
+				weight = weights[i]
 				# apply each cost function to the generated trajectory
 				cost_function = cost_functions[i]
-				cost_for_cost_function = cost_function(state, trajectory_for_state, predictions)
+				cost_for_cost_function = cost_function(weight, state, trajectory_for_state, predictions)
 	
 				# multiply the cost by the associated weight
-				weight = weights[i]
+				
 				cost_for_state += weight * cost_for_cost_function
 			costs.append(cost_for_state)
 			print("**state = {}, cost={}".format(state, cost_for_state))
