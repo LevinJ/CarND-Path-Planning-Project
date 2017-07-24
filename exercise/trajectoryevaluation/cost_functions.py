@@ -2,36 +2,35 @@ from helpers import logistic, to_equation, differentiate, nearest_approach_to_an
 from constants import *
 import numpy as np
 # COST FUNCTIONS
-def time_diff_cost(traj, target_vehicle, delta, T, predictions):
+def time_diff_cost(traj, predictions):
     """
     Penalizes trajectories that span a duration which is longer or 
     shorter than the duration requested.
     """
-    _, _, t = traj
-    return logistic(float(abs(t-T)) / T)
+    _, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    return logistic(float(abs(t-unperturbed_t)) / unperturbed_t)
 
-def s_diff_cost(traj, target_vehicle, delta, T, predictions):
+def s_diff_cost(traj, predictions):
     """
     Penalizes trajectories whose s coordinate (and derivatives) 
     differ from the goal.
     """
-    s, _, T = traj
-    target = predictions[target_vehicle].state_in(T)
-    target = list(np.array(target) + np.array(delta))
-    s_targ = target[:3]
-    S = [f(T) for f in get_f_and_N_derivatives(s, 2)]
+    s, _, t, unperturbed_s,_,_ = traj
+    
+    
+    S = [f(t) for f in get_f_and_N_derivatives(s, 2)]
     cost = 0
-    for actual, expected, sigma in zip(S, s_targ, SIGMA_S):
+    for actual, expected, sigma in zip(S, unperturbed_s, SIGMA_S):
         diff = float(abs(actual-expected))
         cost += logistic(diff/sigma)
     return cost
 
-def d_diff_cost(traj, target_vehicle, delta, T, predictions):
+def d_diff_cost(traj, predictions):
     """
     Penalizes trajectories whose d coordinate (and derivatives) 
     differ from the goal.
     """
-    _, d_coeffs, T = traj
+    _, d_coeffs, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     
     d_dot_coeffs = differentiate(d_coeffs)
     d_ddot_coeffs = differentiate(d_dot_coeffs)
@@ -40,18 +39,15 @@ def d_diff_cost(traj, target_vehicle, delta, T, predictions):
     d_dot = to_equation(d_dot_coeffs)
     d_ddot = to_equation(d_ddot_coeffs)
 
-    D = [d(T), d_dot(T), d_ddot(T)]
+    D = [d(t), d_dot(t), d_ddot(t)]
     
-    target = predictions[target_vehicle].state_in(T)
-    target = list(np.array(target) + np.array(delta))
-    d_targ = target[3:]
     cost = 0
-    for actual, expected, sigma in zip(D, d_targ, SIGMA_D):
+    for actual, expected, sigma in zip(D, unperturbed_d, SIGMA_D):
         diff = float(abs(actual-expected))
         cost += logistic(diff/sigma)
     return cost
 
-def collision_cost(traj, target_vehicle, delta, T, predictions):
+def collision_cost(traj, predictions):
     """
     Binary cost function which penalizes collisions.
     """
@@ -61,15 +57,15 @@ def collision_cost(traj, target_vehicle, delta, T, predictions):
     else: 
         return 0.0
 
-def buffer_cost(traj, target_vehicle, delta, T, predictions):
+def buffer_cost(traj, predictions):
     """
     Penalizes getting close to other vehicles.
     """
     nearest = nearest_approach_to_any_vehicle(traj, predictions)
     return logistic(2*VEHICLE_RADIUS / nearest)
     
-def stays_on_road_cost(traj, target_vehicle, delta, T, predictions):
-    _, d_coeffs, t = traj
+def stays_on_road_cost(traj, predictions):
+    _, d_coeffs, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     
     d = to_equation(d_coeffs)
     all_ds = [d(float(t)/100 * i) for i in range(100)]
@@ -80,8 +76,8 @@ def stays_on_road_cost(traj, target_vehicle, delta, T, predictions):
         return 1
     
 
-def exceeds_speed_limit_cost(traj, target_vehicle, delta, T, predictions):
-    s, _, t = traj
+def exceeds_speed_limit_cost(traj, predictions):
+    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     speed = differentiate(s)
    
     speed = to_equation(speed)
@@ -94,8 +90,8 @@ def exceeds_speed_limit_cost(traj, target_vehicle, delta, T, predictions):
         return 0
     
 
-def min_speed_cost(traj, target_vehicle, delta, T, predictions):
-    s, _, t = traj
+def min_speed_cost(traj, predictions):
+    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     speed = differentiate(s)
    
     speed = to_equation(speed)
@@ -104,64 +100,64 @@ def min_speed_cost(traj, target_vehicle, delta, T, predictions):
     if min_speed < MIN_SPEED: return 1
     else: return 0
 
-def efficiency_cost(traj, target_vehicle, delta, T, predictions):
+def efficiency_cost(traj, predictions):
     """
     Rewards high average speeds.
     """
-    s, _, t = traj
+    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     s = to_equation(s)
     avg_v = float(s(t)) / t
     targ_s, _, _, _, _, _ = predictions[target_vehicle].state_in(t)
     targ_v = float(targ_s) / t
     return logistic(2*float(targ_v - avg_v) / avg_v)
 
-def max_accel_cost(traj, target_vehicle, delta, T, predictions):
-    s, d, t = traj
+def max_accel_cost(traj,  predictions):
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     a = to_equation(s_d_dot)
     total_acc = 0
-    dt = float(T) / 100.0
+    dt = float(t) / 100.0
     for i in range(100):
         t = dt * i
         acc = a(t)
         total_acc += abs(acc*dt)
-    acc_per_second = total_acc / T
+    acc_per_second = total_acc / t
     
     return logistic(acc_per_second / EXPECTED_ACC_IN_ONE_SEC )
     
-def total_accel_cost(traj, target_vehicle, delta, T, predictions):
-    s, d, t = traj
+def total_accel_cost(traj, predictions):
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     a = to_equation(s_d_dot)
-    all_accs = [a(float(T)/100 * i) for i in range(100)]
+    all_accs = [a(float(t)/100 * i) for i in range(100)]
     max_acc = max(all_accs, key=abs)
     if abs(max_acc) > MAX_ACCEL: return 1
     else: return 0
     
 
-def max_jerk_cost(traj, target_vehicle, delta, T, predictions):
-    s, d, t = traj
+def max_jerk_cost(traj, predictions):
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     jerk = differentiate(s_d_dot)
     jerk = to_equation(jerk)
-    all_jerks = [jerk(float(T)/100 * i) for i in range(100)]
+    all_jerks = [jerk(float(t)/100 * i) for i in range(100)]
     max_jerk = max(all_jerks, key=abs)
     if abs(max_jerk) > MAX_JERK: return 1
     else: return 0
 
-def total_jerk_cost(traj, target_vehicle, delta, T, predictions):
-    s, d, t = traj
+def total_jerk_cost(traj, predictions):
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     jerk = to_equation(differentiate(s_d_dot))
     total_jerk = 0
-    dt = float(T) / 100.0
+    dt = float(t) / 100.0
     for i in range(100):
         t = dt * i
         j = jerk(t)
         total_jerk += abs(j*dt)
-    jerk_per_second = total_jerk / T
+    jerk_per_second = total_jerk / t
     return logistic(jerk_per_second / EXPECTED_JERK_IN_ONE_SEC )

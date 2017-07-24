@@ -20,8 +20,25 @@ WEIGHTED_COST_FUNCTIONS = [
     (stays_on_road_cost,    10)
 ]
 
-
-def PTG(start_s, start_d, T, target_vehicle, delta,  predictions):
+def follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions):
+    all_goals = []
+    timestep = 0.5
+    t = T - 4 * timestep
+    while t <= T + 4 * timestep:
+        target = predictions[target_vehicle]
+        target_state = np.array(target.state_in(t)) + np.array(delta)
+        goal_s = target_state[:3]
+        goal_d = target_state[3:]
+        
+        all_goals.append((goal_s,goal_d, t,goal_s,goal_d))
+        for _ in range(N_SAMPLES):
+            perturbed = perturb_goal(goal_s, goal_d)
+           
+            all_goals.append((perturbed[0], perturbed[1], t,goal_s,goal_d))
+        t += timestep
+    return PTG(start_s, start_d,all_goals, T,predictions)
+    
+def PTG(start_s, start_d,all_goals, T,predictions):
     """
     Finds the best trajectory according to WEIGHTED_COST_FUNCTIONS (global).
 
@@ -53,40 +70,26 @@ def PTG(start_s, start_d, T, target_vehicle, delta,  predictions):
     """
     
     # generate alternative goals
-    all_goals = []
-    timestep = 0.5
-    t = T - 4 * timestep
-    while t <= T + 4 * timestep:
-        target = predictions[target_vehicle]
-        target_state = np.array(target.state_in(t)) + np.array(delta)
-        goal_s = target_state[:3]
-        goal_d = target_state[3:]
-        
-        goals = [(goal_s, goal_d, t)]
-        for _ in range(N_SAMPLES):
-            perturbed = perturb_goal(goal_s, goal_d)
-            goals.append((perturbed[0], perturbed[1], t))
-        all_goals += goals
-        t += timestep
+    
     
     # find best trajectory
     trajectories = []
     for goal in all_goals:
-        s_goal, d_goal, t = goal
+        s_goal, d_goal, t, unperturbed_s,unperturbed_d = goal
         s_coefficients = JMT(start_s, s_goal, t)
 #         print("start_d: {}, d_goal{}".format(start_d, d_goal))
         d_coefficients = JMT(start_d, d_goal, t)
-        trajectories.append(tuple([s_coefficients, d_coefficients, t]))
+        trajectories.append(tuple([s_coefficients, d_coefficients, t, unperturbed_s,unperturbed_d, T]))
     
-    best = min(trajectories, key=lambda tr: calculate_cost(tr, target_vehicle, delta, T, predictions, WEIGHTED_COST_FUNCTIONS))
-    calculate_cost(best, target_vehicle, delta, T, predictions, WEIGHTED_COST_FUNCTIONS, verbose=True)
+    best = min(trajectories, key=lambda tr: calculate_cost(tr, predictions, WEIGHTED_COST_FUNCTIONS))
+    calculate_cost(best, predictions, WEIGHTED_COST_FUNCTIONS, verbose=True)
     return best
     
 
-def calculate_cost(trajectory, target_vehicle, delta, goal_t, predictions, cost_functions_with_weights, verbose=False):
+def calculate_cost(trajectory,  predictions, cost_functions_with_weights, verbose=False):
     cost = 0
     for cf, weight in cost_functions_with_weights:
-        new_cost = weight * cf(trajectory, target_vehicle, delta, goal_t, predictions)
+        new_cost = weight * cf(trajectory, predictions)
         cost += new_cost
         if verbose:
             print("cost for {} is \t {}".format(cf.__name__, new_cost))

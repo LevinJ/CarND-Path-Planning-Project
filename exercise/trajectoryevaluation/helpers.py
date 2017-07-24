@@ -65,12 +65,12 @@ def nearest_approach_to_any_vehicle(traj, vehicles):
 
 def nearest_approach(traj, vehicle):
     closest = 999999
-    s_,d_,T = traj
+    s_,d_,t, unperturbed_s,unperturbed_d,unperturbed_t = traj
     s = to_equation(s_)
     d = to_equation(d_)
 #     closest_t = 0
     for i in range(100):
-        t = float(i) / 100 * T
+        t = float(i) / 100 * t
         cur_s = s(t)
         cur_d = d(t)
         targ_s, _, _, targ_d, _, _ = vehicle.state_in(t)
