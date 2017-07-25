@@ -21,14 +21,27 @@ WEIGHTED_COST_FUNCTIONS = [
 ]
 
 def follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions):
+    
+    all_goals = perturb_goals(start_s, start_d, T, None, None, target_vehicle, delta,predictions)
+    return PTG(start_s, start_d,all_goals, T,predictions)
+
+def perturb_goals(start_s, start_d, T, goal_s, goal_d, target_vehicle, delta,predictions):
     all_goals = []
     timestep = 0.5
     t = T - 4 * timestep
+    
+    if goal_s is None:
+        folllow_vehicle = True
+    else:
+        folllow_vehicle = False
+        
     while t <= T + 4 * timestep:
-        target = predictions[target_vehicle]
-        target_state = np.array(target.state_in(t)) + np.array(delta)
-        goal_s = target_state[:3]
-        goal_d = target_state[3:]
+        
+        if folllow_vehicle:
+            target = predictions[target_vehicle]
+            target_state = np.array(target.state_in(t)) + np.array(delta)
+            goal_s = target_state[:3]
+            goal_d = target_state[3:]
         
         all_goals.append((goal_s,goal_d, t,goal_s,goal_d))
         for _ in range(N_SAMPLES):
@@ -36,7 +49,14 @@ def follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions):
            
             all_goals.append((perturbed[0], perturbed[1], t,goal_s,goal_d))
         t += timestep
+    return all_goals
+
+def follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions):
+    all_goals = perturb_goals(start_s, start_d, T, goal_s, goal_d, None, None,predictions)
     return PTG(start_s, start_d,all_goals, T,predictions)
+   
+
+
     
 def PTG(start_s, start_d,all_goals, T,predictions):
     """

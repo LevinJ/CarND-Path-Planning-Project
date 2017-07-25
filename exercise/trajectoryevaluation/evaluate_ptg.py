@@ -1,28 +1,37 @@
 #!/usr/bin/env python
 
-from ptg import follow_vehicle
+from ptg import follow_vehicle,follow_goal
 from helpers import Vehicle, show_trajectory
 
 def main():
-# 	vehicle = Vehicle([0,10,0, 0,0,0])
+	T = 5.0
+	
+	
+	
+	#keep lane, follow vehicle
+# 	vehicle = Vehicle([50,10,0, 0,0,0])
 # 	predictions = {0: vehicle}
 # 	target = 0
-# 	delta = [-20, 0, 0, 0, 0 ,0]
-# 	start_s = [10, 10, 0]
-# 	start_d = [4, 0, 0]
+# 	delta = [-3, 0, 0, 0, 0 ,0]
+# 	start_s = [0, 10, 0]
+# 	start_d = [0, 0, 0]
+# 	best = follow_vehicle(start_s, start_d, T, target, delta, predictions)
 	
 	
-	#keep lane, constraint
-	vehicle = Vehicle([50,10,0, 0,0,0])
+	#keep lane,follow goal
+	
+	vehicle = Vehicle([1500,10,0, 0,0,0])
 	predictions = {0: vehicle}
-	target = 0
-	delta = [-3, 0, 0, 0, 0 ,0]
 	start_s = [0, 10, 0]
 	start_d = [0, 0, 0]
+	goal_s = [130,30,0]
+	goal_d = [0,0,0]
+	best = follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
 	
 	
-	T = 5.0
-	best = follow_vehicle(start_s, start_d, T, target, delta, predictions)
+	
+
+	
 	print("best trajectory {}".format(best))
 	show_trajectory(best[0], best[1], best[2], vehicle)
 	
