@@ -20,6 +20,29 @@ WEIGHTED_COST_FUNCTIONS = [
     (stays_on_road_cost,    10)
 ]
 
+def get_lane_num(d):
+    return d / 4
+def keep_lane(start_s, start_d, T, predictions):
+    s = start_s[0]
+    d = start_d[0]
+    in_front = [(v_id, v) for (v_id, v) in predictions.items() if get_lane_num(v.start_state[3]) == get_lane_num(d) and v.start_state[0] > s ]
+    leading = min(in_front, key=lambda v: v[1].start_state[0] - s)
+    leading_id = leading[0]
+    leading = leading[1].start_state
+    
+    distance = leading[0] - s
+    max_distance = (SPEED_LIMIT - leading[1])* T
+    
+    if distance > max_distance + SAFE_DISTANCE_BUFFER:
+        goal_s = [s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0]
+        goal_d = [0,0,0]
+        return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
+    else:
+        target_vehicle = leading_id
+        delta = [-SAFE_DISTANCE_BUFFER *3, 0,0,0,0,0]
+        return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions)
+        
+    
 def follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions):
     
     all_goals = perturb_goals(start_s, start_d, T, None, None, target_vehicle, delta,predictions)

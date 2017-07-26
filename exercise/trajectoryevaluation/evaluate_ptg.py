@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ptg import follow_vehicle,follow_goal
+from ptg import follow_vehicle,follow_goal,keep_lane
 from helpers import Vehicle, show_trajectory
 
 def main():
@@ -20,14 +20,29 @@ def main():
 	
 	#keep lane,follow goal
 	
-	vehicle = Vehicle([1500,10,0, 0,0,0])
+# 	vehicle = Vehicle([1500,10,0, 0,0,0])
+# 	predictions = {0: vehicle}
+# 	start_s = [0, 10, 0]
+# 	start_d = [0, 0, 0]
+# 	goal_s = [130,30,0]
+# 	goal_d = [0,0,0]
+
+	
+	
+# 	vehicle = Vehicle([1500,10,0, 0,0,0])
+# 	predictions = {0: vehicle}
+# 	start_s = [0, 10, 0]
+# 	start_d = [0, 0, 0]
+# 	best = keep_lane(start_s, start_d, T, predictions)
+
+
+
+	vehicle = Vehicle([50,10,0, 0,0,0])
 	predictions = {0: vehicle}
 	start_s = [0, 10, 0]
 	start_d = [0, 0, 0]
-	goal_s = [130,30,0]
-	goal_d = [0,0,0]
-	best = follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
-	
+	best = keep_lane(start_s, start_d, T, predictions)
+ 	
 	
 	
 

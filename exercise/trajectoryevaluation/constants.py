@@ -13,6 +13,7 @@ EXPECTED_ACC_IN_ONE_SEC = 1 # m/s
 
 SPEED_LIMIT = 30
 VEHICLE_RADIUS = 1.5 # model vehicle as circle to simplify collision detection
+SAFE_DISTANCE_BUFFER = 2*VEHICLE_RADIUS
 
 MAX_D = 4
 MIN_D = 0
