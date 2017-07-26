@@ -21,7 +21,40 @@ WEIGHTED_COST_FUNCTIONS = [
 ]
 
 def get_lane_num(d):
-    return d / 4
+    return int(d / 4)
+
+    
+def PLC(start_s, start_d, T, predictions, PLCL=True):
+    no_target = True
+    s = start_s[0]
+    d = start_d[0]
+    if PLCL:
+        target_lane = get_lane_num(d) + 1
+    else:
+        target_lane = get_lane_num(d) - 1
+    all_vehicles = [(v_id, v) for (v_id, v) in predictions.items() if get_lane_num(v.start_state[3]) == target_lane]
+    if len(all_vehicles) != 0 :
+        closetest = min(all_vehicles, key=lambda v: abs(v[1].start_state[0] - s))
+        closetest_id = closetest[0]
+        closetest = closetest[1].start_state
+        
+        distance = abs(closetest[0] - s)
+        if closetest[0] < s:
+            max_distance = closetest[1] * T
+        else:
+            max_distance = (SPEED_LIMIT - closetest[1])* T
+        if distance < max_distance:
+            no_target = False
+    if no_target:
+         return keep_lane(start_s, start_d, T, predictions)
+    else:
+        target_vehicle = closetest_id
+        if PLCL:
+            delta = [0, 0,0,-LANE_WIDTH,0,0]
+        else:
+            delta = [0, 0,0,LANE_WIDTH,0,0]
+        return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions)
+             
 def keep_lane(start_s, start_d, T, predictions):
     s = start_s[0]
     d = start_d[0]
