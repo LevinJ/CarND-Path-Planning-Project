@@ -206,6 +206,7 @@ int main() {
     if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
       auto s = hasData(data);
+      std::cout<<s<<std::endl;
 
       if (s != "") {
         auto j = json::parse(s);
@@ -232,6 +233,16 @@ int main() {
 
           	// Sensor Fusion Data, a list of all other cars on the same side of the road.
           	auto sensor_fusion = j[1]["sensor_fusion"];
+
+          	cout<<"sensor fusion "<<endl;
+
+          	//save sensor fusio/predecition information
+          	for (const auto& v : sensor_fusion)
+          	{// access by const reference
+          		std:cout<<"vechile: "<<std::endl;
+          		std::cout << v << std::endl;
+          		std::cout << v[0]<<','<<v[1] << std::endl;
+          	}
 
           	json msgJson;
 
