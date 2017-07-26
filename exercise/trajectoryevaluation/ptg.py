@@ -24,14 +24,22 @@ def get_lane_num(d):
     return int(d / 4)
 
     
-def PLC(start_s, start_d, T, predictions, PLCL=True):
-    no_target = True
+def LC(start_s, start_d, T, predictions, prepare=True, left= True):
+    has_target = False
     s = start_s[0]
     d = start_d[0]
-    if PLCL:
+    if left:
         target_lane = get_lane_num(d) + 1
     else:
         target_lane = get_lane_num(d) - 1
+    if prepare:
+            if left:
+                delta = [0, 0,0,-LANE_WIDTH,0,0]
+            else:
+                delta = [0, 0,0,LANE_WIDTH,0,0]
+    else:
+        delta = [0, 0,0,0,0,0]
+            
     all_vehicles = [(v_id, v) for (v_id, v) in predictions.items() if get_lane_num(v.start_state[3]) == target_lane]
     if len(all_vehicles) != 0 :
         closetest = min(all_vehicles, key=lambda v: abs(v[1].start_state[0] - s))
@@ -44,16 +52,20 @@ def PLC(start_s, start_d, T, predictions, PLCL=True):
         else:
             max_distance = (SPEED_LIMIT - closetest[1])* T
         if distance < max_distance:
-            no_target = False
-    if no_target:
-         return keep_lane(start_s, start_d, T, predictions)
-    else:
+            has_target = True
+    if has_target:
+        
         target_vehicle = closetest_id
-        if PLCL:
-            delta = [0, 0,0,-LANE_WIDTH,0,0]
-        else:
-            delta = [0, 0,0,LANE_WIDTH,0,0]
+        
         return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions)
+    #no target
+    if prepare:
+        return keep_lane(start_s, start_d, T, predictions)
+    else:
+        goal_s = [s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0]
+        goal_d = [target_lane*LANE_WIDTH + LANE_WIDTH/2,0,0]
+        return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
+    
              
 def keep_lane(start_s, start_d, T, predictions):
     s = start_s[0]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ptg import follow_vehicle,follow_goal,keep_lane,PLC
+from ptg import follow_vehicle,follow_goal,keep_lane,LC
 from helpers import Vehicle, show_trajectory
 
 def main():
@@ -55,12 +55,20 @@ def main():
 	
 	
 	#PLCR, with target
+# 	vehicle = Vehicle([50,20,0, 2,0,0])
+# 	vehicle_1 = Vehicle([50,10,0, 6,0,0])
+# 	predictions = {0: vehicle, 1:vehicle_1}
+# 	start_s = [30, 10, 0]
+# 	start_d = [6, 0, 0]
+# 	best = LC(start_s, start_d, T, predictions, prepare=True, left= False)
+	
+	
 	vehicle = Vehicle([50,20,0, 2,0,0])
 	vehicle_1 = Vehicle([50,10,0, 6,0,0])
 	predictions = {0: vehicle, 1:vehicle_1}
 	start_s = [30, 10, 0]
 	start_d = [6, 0, 0]
-	best = PLC(start_s, start_d, T, predictions, PLCL=False)
+	best = LC(start_s, start_d, T, predictions, prepare=False, left= True)
  	
 	
 	
