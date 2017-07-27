@@ -25,7 +25,7 @@ public:
 	}
 
 
-	std::vector<double> state_in(double t){
+	std::vector<double> state_in(double t) const{
 		std::vector<double> s = {start_state[0],start_state[1],start_state[2]};
 		std::vector<double> d = {start_state[3],start_state[4],start_state[5]};
 		std::vector<double> state = {

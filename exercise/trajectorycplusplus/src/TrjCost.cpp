@@ -91,3 +91,84 @@ TrjCost::~TrjCost() {
 	// TODO Auto-generated destructor stub
 }
 
+/*
+   Penalizes trajectories whose d coordinate (and derivatives)
+    differ from the goal.
+ */
+double TrjCost::d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	const vector<double> &d_coeff = traj.d_coeff;
+	const vector<double> &unperturbed_d = traj.unperturbed_d;
+	double t = traj.t;
+
+	const vector<double> d = d_coeff;
+	const vector<double> d_dot = differentiate(d);
+	const vector<double> d_dot_dot = differentiate(d_dot);
+
+	vector<double> d_actual = {to_equation(d, t),to_equation(d_dot, t),to_equation(d_dot_dot, t)};
+
+	double cost = 0;
+	for (int i =0; i< unperturbed_d.size(); i++){
+		double actual = d_actual[i];
+		double expected = unperturbed_d[i];
+		double sigma = SIGMA_D[i];
+
+		double diff = float(abs(actual-expected));
+		cost += logistic(diff/sigma);
+	}
+	return cost;
+}
+
+double TrjCost::nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
+	double closest = 999999;
+	const vector<double> &s_coeffs = traj.s_coeff;
+	const vector<double> &d_coeffs = traj.d_coeff;
+	double t = traj.t;
+	for(int i=0; i< 100; i++){
+		double cur_t = float(i) / 100 * t;
+		double cur_s = to_equation(s_coeffs, cur_t);
+		double cur_d = to_equation(d_coeffs, cur_d);
+		std::vector<double> v_state = vehicle.state_in(cur_t);
+
+		double targ_s = v_state[0];
+		double targ_d = v_state[3];
+		double dist = sqrt(pow((cur_s-targ_s), 2) + pow((cur_d-targ_d), 2));
+		if(dist < closest){
+			closest = dist;
+		}
+	}
+	return closest;
+
+}
+/*
+  Calculates the closest distance to any vehicle during a trajectory.
+ */
+double TrjCost::nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	double closest = 999999;
+	for (const auto& kv : predictions) {
+		double d = nearest_approach(traj, kv.second);
+		if(d < closest){
+			closest = d;
+		}
+	}
+	return closest;
+
+}
+/*
+ *  Binary cost function which penalizes collisions.
+ */
+double TrjCost::collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
+	if(nearest < 2*VEHICLE_RADIUS)
+		return 1.0;
+	else
+		return 0.0;
+}
+/*
+ * Penalizes getting close to other vehicles.
+ */
+
+double TrjCost::buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
+	return logistic(2*VEHICLE_RADIUS / nearest);
+}
+
