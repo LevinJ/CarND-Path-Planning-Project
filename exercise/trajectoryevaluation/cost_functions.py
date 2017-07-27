@@ -83,22 +83,14 @@ def exceeds_speed_limit_cost(traj, predictions):
     speed = to_equation(speed)
     all_speeds = [speed(float(t)/100 * i) for i in range(100)]
     max_speed = max(all_speeds)
+    min_speed = min(all_speeds)
     
-    if max_speed > SPEED_LIMIT:
-        return 1
-    else:
+    if max_speed < SPEED_LIMIT and min_speed> MIN_SPEED:
         return 0
+    else:
+        return 1
     
 
-def min_speed_cost(traj, predictions):
-    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
-    speed = differentiate(s)
-   
-    speed = to_equation(speed)
-    all_speeds = [speed(float(t)/100 * i) for i in range(100)]
-    min_speed = min(all_speeds)
-    if min_speed < MIN_SPEED: return 1
-    else: return 0
 
 def efficiency_cost(traj, predictions):
     """
@@ -119,10 +111,10 @@ def total_accel_cost(traj,  predictions):
     total_acc = 0
     dt = float(t) / 100.0
     for i in range(100):
-        t = dt * i
-        acc = a(t)
+        cur_t = dt * i
+        acc = a(cur_t)
         total_acc += abs(acc*dt)
-    acc_per_second = total_acc / t
+    acc_per_second = total_acc / cur_t
     
     return logistic(acc_per_second / EXPECTED_ACC_IN_ONE_SEC )
     

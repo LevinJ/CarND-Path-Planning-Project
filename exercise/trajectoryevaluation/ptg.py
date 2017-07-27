@@ -15,7 +15,7 @@ WEIGHTED_COST_FUNCTIONS = [
     (buffer_cost,       1),
     (max_accel_cost,    1),
     (total_accel_cost,  1),
-    (min_speed_cost,    1),
+#     (min_speed_cost,    1),
     (exceeds_speed_limit_cost, 1),
     (stays_on_road_cost,    10)
 ]

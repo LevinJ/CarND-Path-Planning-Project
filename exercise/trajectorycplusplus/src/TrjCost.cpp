@@ -8,6 +8,7 @@
 #include "TrjCost.h"
 #include <cmath>
 #include "Constants.h"
+#include <algorithm>
 
 using namespace std;
 TrjCost::TrjCost() {
@@ -170,5 +171,134 @@ double TrjCost::collision_cost(const TrjObject &traj, const std::map<int, Vehicl
 double TrjCost::buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
 	return logistic(2*VEHICLE_RADIUS / nearest);
+}
+
+double TrjCost::stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	const vector<double> &d_coeffs = traj.d_coeff;
+	double t = traj.t;
+	vector<double> all_ds = {};
+	for(int i=0; i< 100;i++){
+		double cur_t = float(t)/100 * i;
+		all_ds.push_back(to_equation(d_coeffs, cur_t));
+	}
+
+	auto max_d = std::max_element(std::begin(all_ds), std::end(all_ds));
+	auto min_d = std::min_element(std::begin(all_ds), std::end(all_ds));
+
+	if(*max_d <= MAX_D && *min_d >=MIN_D){
+		return 0;
+	}
+	return 1;
+}
+
+double TrjCost::exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+
+	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
+	double t = traj.t;
+	vector<double> all_vs = {};
+	for(int i=0; i< 100;i++){
+		double cur_t = float(t)/100 * i;
+		all_vs.push_back(to_equation(s_dot_coeffs, cur_t));
+	}
+
+	auto max_v = std::max_element(std::begin(all_vs), std::end(all_vs));
+	auto min_v = std::min_element(std::begin(all_vs), std::end(all_vs));
+
+	if(*max_v < SPEED_LIMIT && *min_v > MIN_SPEED){
+		return 0;
+	}
+	return 1;
+}
+
+
+double TrjCost::total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
+
+	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
+	double t = traj.t;
+
+	double dt = t / 100.0;
+
+	double cur_t= 0;
+	double total_acc = 0;
+
+	for(int i=0; i< 100; i++){
+		cur_t = dt * i;
+		double acc = to_equation(s_dot_dot_coeffs, cur_t);
+		total_acc += abs(acc*dt);
+	}
+
+	double acc_per_second = total_acc / cur_t;
+
+	return logistic(acc_per_second / EXPECTED_ACC_IN_ONE_SEC );
+
+}
+
+
+double TrjCost::max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
+
+	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
+	double t = traj.t;
+
+	vector<double> all_as = {};
+	for(int i=0; i< 100;i++){
+		double cur_t = float(t)/100 * i;
+		all_as.push_back(to_equation(s_dot_dot_coeffs, cur_t));
+	}
+
+	auto max_acc = std::max_element(std::begin(all_as), std::end(all_as));
+	if (abs(*max_acc) > MAX_ACCEL){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
+double TrjCost::total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
+
+	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
+
+	vector<double> s_dot_dot_dot_coeffs = differentiate(s_dot_dot_coeffs);
+	double t = traj.t;
+
+	double dt = t / 100.0;
+
+	double cur_t= 0;
+	double total_jerks = 0;
+
+	for(int i=0; i< 100; i++){
+		cur_t = dt * i;
+		double jerk = to_equation(s_dot_dot_coeffs, cur_t);
+		total_jerks += abs(jerk*dt);
+	}
+
+	double jerk_per_second = total_jerks / cur_t;
+
+	return logistic(jerk_per_second / EXPECTED_ACC_IN_ONE_SEC );
+
+}
+
+double TrjCost::max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
+
+	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
+
+	vector<double> s_dot_dot_dot_coeffs = differentiate(s_dot_dot_coeffs);
+	double t = traj.t;
+
+	vector<double> all_jerks = {};
+	for(int i=0; i< 100;i++){
+		double cur_t = float(t)/100 * i;
+		all_jerks.push_back(to_equation(s_dot_dot_dot_coeffs, cur_t));
+	}
+
+	auto max_jerk = std::max_element(std::begin(all_jerks), std::end(all_jerks));
+	if (abs(*max_jerk) > MAX_JERK){
+		return 1;
+	}else{
+		return 0;
+	}
 }
 
