@@ -25,9 +25,10 @@ std::map<int, Vehicle> Helper::parse_sensor_fusion(std::vector<std::vector<doubl
 		double s = v[5];
 		double d = v[6];
 		double s_dot = sqrt(vx*vx + vy*vy);
+		std::vector<double> start_state = {s,s_dot,0,d,0,0};
 
-		Vehicle v({s,s_dot,0,d,0,0});
-		predictions[id] = v;
+		Vehicle veh(start_state);
+		predictions[id] = veh;
 
 
 	}

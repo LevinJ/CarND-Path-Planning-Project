@@ -20,6 +20,9 @@ public:
 	Vehicle(std::vector<double> start){
 		start_state = start;
 	}
+	Vehicle(){
+
+	}
 
 
 	std::vector<double> state_in(double t){
@@ -37,6 +40,16 @@ public:
 	}
 };
 
+
+class TrjObject{
+public:
+	std::vector<double> s_coeff;
+	std::vector<double> d_coeff;
+	double t;
+	std::vector<double> unperturbed_s;
+	std::vector<double> unperturbed_d;
+	double unperturbed_t;
+};
 class Helper {
 public:
 	Helper();
