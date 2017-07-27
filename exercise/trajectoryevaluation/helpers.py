@@ -70,10 +70,10 @@ def nearest_approach(traj, vehicle):
     d = to_equation(d_)
 #     closest_t = 0
     for i in range(100):
-        t = float(i) / 100 * t
-        cur_s = s(t)
-        cur_d = d(t)
-        targ_s, _, _, targ_d, _, _ = vehicle.state_in(t)
+        cur_t = float(i) / 100 * t
+        cur_s = s(cur_t)
+        cur_d = d(cur_t)
+        targ_s, _, _, targ_d, _, _ = vehicle.state_in(cur_t)
         dist = sqrt((cur_s-targ_s)**2 + (cur_d-targ_d)**2)
         if dist < closest:
             closest = dist

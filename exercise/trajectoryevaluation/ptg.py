@@ -49,13 +49,17 @@ def LC(start_s, start_d, T, predictions, prepare=True, left= True):
         distance = abs(closetest[0] - s)
         if closetest[0] < s:
             max_distance = closetest[1] * T
+            delta_s = SAFE_DISTANCE_BUFFER
         else:
             max_distance = (SPEED_LIMIT - closetest[1])* T
+            delta_s = -SAFE_DISTANCE_BUFFER
         if distance < max_distance:
             has_target = True
     if has_target:
         
         target_vehicle = closetest_id
+        if not prepare:
+            delta[0] = delta_s
         
         return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions)
     #no target
