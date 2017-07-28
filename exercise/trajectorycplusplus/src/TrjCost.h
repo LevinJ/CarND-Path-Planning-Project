@@ -11,10 +11,6 @@
 #include "vector"
 #include "Helper.h"
 
-class TrjCost {
-public:
-	TrjCost();
-	virtual ~TrjCost();
 
 	double time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
 	double s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
@@ -29,12 +25,12 @@ public:
 	double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
 	double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
 	double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-private:
+
 	double nearest_approach(const TrjObject &traj, const Vehicle &vehicle);
 	double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
 	std::vector<double> differentiate(const std::vector<double> &coefficients);
 	double to_equation(const std::vector<double> &coefficients, double t);
 	double logistic(double x);
-};
+
 
 #endif /* EXERCISE_TRAJECTORYCPLUSPLUS_SRC_TRJCOST_H_ */

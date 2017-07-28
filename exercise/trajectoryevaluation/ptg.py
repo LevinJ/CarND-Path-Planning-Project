@@ -20,6 +20,8 @@ WEIGHTED_COST_FUNCTIONS = [
     (stays_on_road_cost,    10)
 ]
 
+m_current_behaviour = ""
+
 def get_lane_num(d):
     return int(d / 4)
 

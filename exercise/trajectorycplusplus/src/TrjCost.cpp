@@ -11,16 +11,13 @@
 #include <algorithm>
 
 using namespace std;
-TrjCost::TrjCost() {
-	// TODO Auto-generated constructor stub
 
-}
 
 /*
    Penalizes trajectories that span a duration which is longer or
    shorter than the duration requested.
  */
-double TrjCost::time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	double t = traj.t;
 	double unperturbed_t = traj.unperturbed_t;
 
@@ -32,7 +29,7 @@ range [0, infinity] and -1 to 1 for x in the range [-infinity, infinity].
 
 Useful for cost functions.
  */
-double TrjCost::logistic(double x){
+double logistic(double x){
 
 	return 2.0 / (1 + exp(-x)) - 1.0;
 
@@ -42,7 +39,7 @@ double TrjCost::logistic(double x){
    Penalizes trajectories whose s coordinate (and derivatives)
     differ from the goal.
  */
-double TrjCost::s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	const vector<double> &s_coeff = traj.s_coeff;
 	const vector<double> &unperturbed_s = traj.unperturbed_s;
 	double t = traj.t;
@@ -67,7 +64,7 @@ double TrjCost::s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> 
 /*
  Calculates the derivative of a polynomial and returns the corresponding coefficients.
  */
-std::vector<double> TrjCost::differentiate(const std::vector<double> &coefficients){
+std::vector<double> differentiate(const std::vector<double> &coefficients){
 	std::vector<double> new_cos = {};
 	for (int i=0; i<coefficients.size();i++ ){
 		if (i==0){
@@ -80,7 +77,7 @@ std::vector<double> TrjCost::differentiate(const std::vector<double> &coefficien
 /*
  Takes the coefficients of a polynomial and point t, calculate the f value
  */
-double TrjCost::to_equation(const std::vector<double> &coefficients, double t){
+double to_equation(const std::vector<double> &coefficients, double t){
 	double total = 0.0;
 	for (int i = 0; i<coefficients.size(); i++ ){
 		total += coefficients[i] * pow(t, i);
@@ -88,15 +85,12 @@ double TrjCost::to_equation(const std::vector<double> &coefficients, double t){
 	return total;
 }
 
-TrjCost::~TrjCost() {
-	// TODO Auto-generated destructor stub
-}
 
 /*
    Penalizes trajectories whose d coordinate (and derivatives)
     differ from the goal.
  */
-double TrjCost::d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	const vector<double> &d_coeff = traj.d_coeff;
 	const vector<double> &unperturbed_d = traj.unperturbed_d;
 	double t = traj.t;
@@ -119,7 +113,7 @@ double TrjCost::d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> 
 	return cost;
 }
 
-double TrjCost::nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
+double nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
 	double closest = 999999;
 	const vector<double> &s_coeffs = traj.s_coeff;
 	const vector<double> &d_coeffs = traj.d_coeff;
@@ -143,7 +137,7 @@ double TrjCost::nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
 /*
   Calculates the closest distance to any vehicle during a trajectory.
  */
-double TrjCost::nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	double closest = 999999;
 	for (const auto& kv : predictions) {
 		double d = nearest_approach(traj, kv.second);
@@ -157,7 +151,7 @@ double TrjCost::nearest_approach_to_any_vehicle(const TrjObject &traj, const std
 /*
  *  Binary cost function which penalizes collisions.
  */
-double TrjCost::collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
 	if(nearest < 2*VEHICLE_RADIUS)
 		return 1.0;
@@ -168,12 +162,12 @@ double TrjCost::collision_cost(const TrjObject &traj, const std::map<int, Vehicl
  * Penalizes getting close to other vehicles.
  */
 
-double TrjCost::buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
 	return logistic(2*VEHICLE_RADIUS / nearest);
 }
 
-double TrjCost::stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	const vector<double> &d_coeffs = traj.d_coeff;
 	double t = traj.t;
 	vector<double> all_ds = {};
@@ -191,7 +185,7 @@ double TrjCost::stays_on_road_cost(const TrjObject &traj, const std::map<int, Ve
 	return 1;
 }
 
-double TrjCost::exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 	double t = traj.t;
@@ -211,7 +205,7 @@ double TrjCost::exceeds_speed_limit_cost(const TrjObject &traj, const std::map<i
 }
 
 
-double TrjCost::total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
@@ -235,7 +229,7 @@ double TrjCost::total_accel_cost(const TrjObject &traj, const std::map<int, Vehi
 }
 
 
-double TrjCost::max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
@@ -255,7 +249,7 @@ double TrjCost::max_accel_cost(const TrjObject &traj, const std::map<int, Vehicl
 	}
 }
 
-double TrjCost::total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
@@ -280,7 +274,7 @@ double TrjCost::total_jerk_cost(const TrjObject &traj, const std::map<int, Vehic
 
 }
 
-double TrjCost::max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);

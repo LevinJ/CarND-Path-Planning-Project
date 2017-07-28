@@ -50,6 +50,17 @@ public:
 	std::vector<double> unperturbed_d;
 	double unperturbed_t;
 };
+
+class TrjGoal{
+public:
+	std::vector<double> s_goal;
+	std::vector<double> d_goal;
+	double t;
+	std::vector<double> unperturbed_s;
+	std::vector<double> unperturbed_d;
+};
+
+
 class Helper {
 public:
 	Helper();
