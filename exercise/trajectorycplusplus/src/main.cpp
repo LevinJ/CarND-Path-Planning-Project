@@ -82,13 +82,27 @@ int main() {
 	//create test cases
 	double T = 5;
 
-	Vehicle vehicle({60,10,0, 2,0,0});
+
+	//keep lane
+//	Vehicle vehicle({60,10,0, 2,0,0});
+//	std::map<int, Vehicle> predictions;
+//	predictions[0] = vehicle;
+//	vector<double> start_s = {0, 10, 0};
+//
+//	vector<double> start_d = {2, 0, 0};
+//	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
+
+
+	//lane change
+	Vehicle vehicle({150,20,0, 2,0,0});
+	Vehicle vehicle_1 = Vehicle({100,10,0, 6,0,0});
 	std::map<int, Vehicle> predictions;
 	predictions[0] = vehicle;
-	vector<double> start_s = {0, 10, 0};
+	predictions[1] = vehicle_1;
 
-	vector<double> start_d = {2, 0, 0};
-	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
+	vector<double> start_s = {30, 10, 0};
+	vector<double> start_d = {6, 0, 0};
+	TrjObject best = trj.LC(start_s, start_d, T, predictions, false, false);
 
 	cout<<endl<<"best:"<<endl<<best<<endl;
 	double best_cost = trj.calculate_cost(best, predictions, true);
