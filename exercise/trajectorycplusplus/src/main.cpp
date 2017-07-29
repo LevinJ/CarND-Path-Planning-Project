@@ -82,7 +82,7 @@ int main() {
 	//create test cases
 	double T = 5;
 
-	Vehicle vehicle({200,10,0, 2,0,0});
+	Vehicle vehicle({60,10,0, 2,0,0});
 	std::map<int, Vehicle> predictions;
 	predictions[0] = vehicle;
 	vector<double> start_s = {0, 10, 0};

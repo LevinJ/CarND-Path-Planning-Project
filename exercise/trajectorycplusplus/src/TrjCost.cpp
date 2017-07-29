@@ -287,7 +287,7 @@ double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &pred
 
 	double jerk_per_second = total_jerks / cur_t;
 
-	return logistic(jerk_per_second / EXPECTED_ACC_IN_ONE_SEC );
+	return logistic(jerk_per_second / EXPECTED_JERK_IN_ONE_SEC );
 
 }
 

@@ -148,8 +148,9 @@ def total_jerk_cost(traj, predictions):
     total_jerk = 0
     dt = float(t) / 100.0
     for i in range(100):
-        t = dt * i
-        j = jerk(t)
+        cur_t = dt * i
+        j = jerk(cur_t)
         total_jerk += abs(j*dt)
-    jerk_per_second = total_jerk / t
+    jerk_per_second = total_jerk / cur_t
     return logistic(jerk_per_second / EXPECTED_JERK_IN_ONE_SEC )
+

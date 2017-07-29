@@ -7,7 +7,7 @@ from constants import *
 WEIGHTED_COST_FUNCTIONS = [
     (time_diff_cost,    1),
     (s_diff_cost,       1),
-    (d_diff_cost,       10),
+    (d_diff_cost,       1),
 #     (efficiency_cost,   1),
     (max_jerk_cost,     1),
     (total_jerk_cost,   1),
@@ -17,7 +17,7 @@ WEIGHTED_COST_FUNCTIONS = [
     (total_accel_cost,  1),
 #     (min_speed_cost,    1),
     (exceeds_speed_limit_cost, 1),
-    (stays_on_road_cost,    10)
+    (stays_on_road_cost,    1)
 ]
 
 m_current_behaviour = ""
@@ -190,7 +190,7 @@ def PTG(start_s, start_d,all_goals, T,predictions):
         trajectories.append(tuple([s_coefficients, d_coefficients, t, unperturbed_s,unperturbed_d, T]))
     
     best = min(trajectories, key=lambda tr: calculate_cost(tr, predictions, WEIGHTED_COST_FUNCTIONS))
-    calculate_cost(best, predictions, WEIGHTED_COST_FUNCTIONS, verbose=True)
+    
     return best
     
 
@@ -210,6 +210,7 @@ def perturb_goal(goal_s, goal_d):
     new_s_goal = []
     for mu, sig in zip(goal_s, SIGMA_S):
         new_s_goal.append(random.gauss(mu, sig))
+    new_s_goal[2 ]= goal_s[2]
 
     new_d_goal = []
     new_d_goal = goal_d
