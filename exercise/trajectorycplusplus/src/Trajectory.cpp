@@ -6,13 +6,31 @@
  */
 
 #include "Trajectory.h"
+#include <algorithm>
+#include <functional>
+#include <random>
+#include <algorithm>
 
 #include "Eigen/Dense"
 #include "TrjCost.h"
+#include "Constants.h"
 
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+
+template <typename T>
+std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
+{
+	assert(a.size() == b.size());
+
+	std::vector<T> result;
+	result.reserve(a.size());
+
+	std::transform(a.begin(), a.end(), b.begin(),
+			std::back_inserter(result), std::plus<T>());
+	return result;
+}
 
 
 Trajectory::Trajectory() {
@@ -57,20 +75,20 @@ Trajectory::~Trajectory() {
 
     > JMT( [0, 10, 0], [10, 10, 0], 1)
     [0.0, 10.0, 0.0, 0.0, 0.0, 0.0]
-    */
+ */
 vector<double> Trajectory::JMT(vector< double> start, vector <double> end, double T)
 {
 
 
-    MatrixXd A = MatrixXd(3, 3);
+	MatrixXd A = MatrixXd(3, 3);
 	A << T*T*T, T*T*T*T, T*T*T*T*T,
-			    3*T*T, 4*T*T*T,5*T*T*T*T,
-			    6*T, 12*T*T, 20*T*T*T;
+			3*T*T, 4*T*T*T,5*T*T*T*T,
+			6*T, 12*T*T, 20*T*T*T;
 
 	MatrixXd B = MatrixXd(3,1);
 	B << end[0]-(start[0]+start[1]*T+.5*start[2]*T*T),
-			    end[1]-(start[1]+start[2]*T),
-			    end[2]-start[2];
+			end[1]-(start[1]+start[2]*T),
+			end[2]-start[2];
 
 	MatrixXd Ai = A.inverse();
 
@@ -79,10 +97,10 @@ vector<double> Trajectory::JMT(vector< double> start, vector <double> end, doubl
 	vector <double> result = {start[0], start[1], .5*start[2]};
 	for(int i = 0; i < C.size(); i++)
 	{
-	    result.push_back(C.data()[i]);
+		result.push_back(C.data()[i]);
 	}
 
-    return result;
+	return result;
 
 }
 
@@ -147,7 +165,7 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 }
 
 double Trajectory::calculate_cost(const TrjObject &trajectory,  const std::map<int, Vehicle> &predictions,
-			bool verbose){
+		bool verbose){
 	double cost = 0;
 	for (auto& kv : m_cost_map){
 		auto cost_func_pair = kv.second;
@@ -159,3 +177,119 @@ double Trajectory::calculate_cost(const TrjObject &trajectory,  const std::map<i
 	}
 	return cost;
 }
+
+std::vector<TrjGoal> Trajectory::perturb_goals(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
+		std::vector<double> &goal_s, std::vector<double> &goal_d,
+		int target_vehicle, const std::vector<double> &delta,std::map<int, Vehicle> &predictions){
+	std::vector<TrjGoal> all_goals = {};
+	double timestep = 0.5;
+	double t = T - 4 * timestep;
+	bool folllow_vehicle = true;
+
+	if(target_vehicle == -1){
+		folllow_vehicle = false;
+	}
+
+	while(t <= T + 4 * timestep){
+		if(folllow_vehicle){
+			const Vehicle &target = predictions[target_vehicle];
+			vector<double> target_state = target.state_in(t) + delta;
+			goal_s = {target_state[0],target_state[1],target_state[2]};
+			goal_d = {target_state[3],target_state[4],target_state[5]};
+		}
+
+		all_goals.push_back(TrjGoal(goal_s,goal_d,t,goal_s,goal_d));
+		for(int i=0; i<N_SAMPLES;i++){
+			std::vector<std::vector<double>> perturbed = perturb_goal(goal_s, goal_d);
+
+			all_goals.push_back(TrjGoal(perturbed[0], perturbed[1], t,goal_s,goal_d));
+		}
+
+		t += timestep;
+	}
+	return all_goals;
+}
+
+/*
+ * Returns a "perturbed" version of the goal.
+ */
+std::vector<std::vector<double>> Trajectory::perturb_goal(const std::vector<double> &goal_s, const std::vector<double> &goal_d){
+	vector<double> new_s_goal = {};
+	//random goal s
+	for(int i=0; i< goal_s.size(); i++){
+		double x = goal_s[i];
+		double sigma_s = SIGMA_S[i];
+		random_device rd;
+		default_random_engine gen(rd());
+		normal_distribution<double> dist_x(x, sigma_s);
+		new_s_goal.push_back(dist_x(gen));
+	}
+	//random goal d
+	//	vector<double> new_s_goal = {};
+	//	for(int i=0; i< goal_d.size(); i++){
+	//		double x = goal_d[i];
+	//		double sigma_d = SIGMA_D[i];
+	//		random_device rd;
+	//		default_random_engine gen(rd());
+	//		normal_distribution<double> dist_x(x, sigma_d);
+	//		new_d_goal.push_back(dist_x(gen));
+	//	}
+	vector<double> new_d_goal = goal_d;
+	return {new_s_goal, new_d_goal};
+}
+
+TrjObject Trajectory::follow_goal(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
+		std::vector<double> &goal_s, std::vector<double> &goal_d,  std::map<int, Vehicle> &predictions){
+	std::vector<TrjGoal> all_goals = perturb_goals(start_s, start_d, T, goal_s, goal_d, -1, {},predictions);
+	return PTG(start_s, start_d,all_goals, T,predictions);
+
+}
+
+TrjObject Trajectory::follow_vehicle(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
+		int target_vehicle, const std::vector<double> &delta,  std::map<int, Vehicle> &predictions){
+	std::vector<double> goal_s = {};
+	std::vector<double> goal_d = {};
+	std::vector<TrjGoal>  all_goals = perturb_goals(start_s, start_d, T, goal_s,
+			goal_d, target_vehicle, delta,predictions);
+	return PTG(start_s, start_d,all_goals, T,predictions);
+}
+int	Trajectory::get_lane_num(double d){
+	return int(d / 4);
+}
+TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::vector<double> &start_d,
+		double T, std::map<int, Vehicle> &predictions){
+	bool has_target = false;
+
+	double s = start_s[0];
+	double d = start_d[0];
+	int leading_id = -1;
+	double distance = INFINITY;
+	for(auto &kv: predictions){
+		Vehicle &v = kv.second;
+		if(get_lane_num(v.start_state[3]) != get_lane_num(d) || v.start_state[0] < s){
+			continue;
+		}
+		if((v.start_state[0] -s)< distance){
+			distance = v.start_state[0] -s;
+			leading_id = kv.first;
+		}
+	}
+	if(leading_id !=-1){
+		double max_distance = (SPEED_LIMIT - predictions[leading_id].start_state[1])* T;
+		if (distance < max_distance + SAFE_DISTANCE_BUFFER){
+			has_target = true;
+		}
+	}
+
+	if(has_target){
+		int target_vehicle = leading_id;
+		vector<double> delta = {-SAFE_DISTANCE_BUFFER*3, 0,0,0,0,0};
+		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
+	}else{
+		vector<double> goal_s = {s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0};
+		vector<double> goal_d = {0,0,0};
+		return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+	}
+
+}
+

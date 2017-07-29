@@ -32,7 +32,10 @@ class Trajectory {
 public:
 	Trajectory();
 	virtual ~Trajectory();
+	TrjObject keep_lane(const std::vector<double> &start_s, const std::vector<double> &start_d,
+			double T, std::map<int, Vehicle> &predictions);
 	std::vector<double> JMT(std::vector< double> start, std::vector <double> end, double T);
+
 private:
 
 	std::map<std::string, CostFuncWeight> m_cost_map;
@@ -40,6 +43,15 @@ private:
 			const std::vector<TrjGoal> &all_goals, double T,const std::map<int, Vehicle> &predictions);
 	double calculate_cost(const TrjObject &trajectory,  const std::map<int, Vehicle> &predictions,
 			bool verbose=false);
+	std::vector<TrjGoal> perturb_goals(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
+			std::vector<double> &goal_s, std::vector<double> &goal_d,
+			int target_vehicle, const std::vector<double> &delta, std::map<int, Vehicle> &predictions);
+	std::vector<std::vector<double>> perturb_goal(const std::vector<double> &goal_s, const std::vector<double> &goal_d);
+	TrjObject follow_goal(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
+			std::vector<double> &goal_s, std::vector<double> &goal_d,  std::map<int, Vehicle> &predictions);
+	TrjObject follow_vehicle(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
+			int target_vehicle, const std::vector<double> &delta,  std::map<int, Vehicle> &predictions);
+	int	get_lane_num(double d);
 
 };
 

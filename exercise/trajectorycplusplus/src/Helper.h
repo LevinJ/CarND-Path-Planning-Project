@@ -53,6 +53,15 @@ public:
 
 class TrjGoal{
 public:
+	TrjGoal(const std::vector<double> &s_goal_p, const std::vector<double> &d_goal_p,double t_p,
+			const std::vector<double> &unperturbed_s_p,const std::vector<double> &unperturbed_d_p){
+		s_goal = s_goal_p;
+		d_goal = d_goal_p;
+		t = t_p;
+		unperturbed_s = unperturbed_s_p;
+		unperturbed_d = unperturbed_d_p;
+
+	}
 	std::vector<double> s_goal;
 	std::vector<double> d_goal;
 	double t;
