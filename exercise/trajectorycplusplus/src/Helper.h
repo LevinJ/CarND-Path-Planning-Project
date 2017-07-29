@@ -10,6 +10,10 @@
 
 #include <vector>
 #include <map>
+#include <iterator>
+
+
+using namespace std;
 
 class Vehicle{
 
@@ -17,14 +21,14 @@ class Vehicle{
 public:
 	std::vector<double> start_state;
 
-	Vehicle(std::vector<double> start){
+	Vehicle(const std::vector<double> &start){
 		start_state = start;
 	}
 	Vehicle(){
 
 	}
 
-
+	//Here we assume the vehicle is in a constant acceleration, and zero turn rate motion model
 	std::vector<double> state_in(double t) const{
 		std::vector<double> s = {start_state[0],start_state[1],start_state[2]};
 		std::vector<double> d = {start_state[3],start_state[4],start_state[5]};
@@ -49,6 +53,8 @@ public:
 	std::vector<double> unperturbed_s;
 	std::vector<double> unperturbed_d;
 	double unperturbed_t;
+	std::vector<double> s_goal;
+	std::vector<double> d_goal;
 };
 
 class TrjGoal{
@@ -68,6 +74,16 @@ public:
 	std::vector<double> unperturbed_s;
 	std::vector<double> unperturbed_d;
 };
+
+template <typename T>
+std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
+	if ( !v.empty() ) {
+		out << '[';
+		std::copy (v.begin(), v.end(), std::ostream_iterator<T>(out, ", "));
+		out << "]";
+	}
+	return out;
+}
 
 
 class Helper {

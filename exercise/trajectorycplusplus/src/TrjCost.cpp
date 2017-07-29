@@ -9,6 +9,7 @@
 #include <cmath>
 #include "Constants.h"
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ using namespace std;
    Penalizes trajectories that span a duration which is longer or
    shorter than the duration requested.
  */
-double time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	double t = traj.t;
 	double unperturbed_t = traj.unperturbed_t;
 
@@ -39,7 +40,7 @@ double logistic(double x){
    Penalizes trajectories whose s coordinate (and derivatives)
     differ from the goal.
  */
-double s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	const vector<double> &s_coeff = traj.s_coeff;
 	const vector<double> &unperturbed_s = traj.unperturbed_s;
 	double t = traj.t;
@@ -90,7 +91,7 @@ double to_equation(const std::vector<double> &coefficients, double t){
    Penalizes trajectories whose d coordinate (and derivatives)
     differ from the goal.
  */
-double d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	const vector<double> &d_coeff = traj.d_coeff;
 	const vector<double> &unperturbed_d = traj.unperturbed_d;
 	double t = traj.t;
@@ -114,7 +115,7 @@ double d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predicti
 }
 
 double nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
-	double closest = 999999;
+	double closest = INFINITY;
 	const vector<double> &s_coeffs = traj.s_coeff;
 	const vector<double> &d_coeffs = traj.d_coeff;
 	double t = traj.t;
@@ -138,7 +139,7 @@ double nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
   Calculates the closest distance to any vehicle during a trajectory.
  */
 double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
-	double closest = 999999;
+	double closest = INFINITY;
 	for (const auto& kv : predictions) {
 		double d = nearest_approach(traj, kv.second);
 		if(d < closest){
@@ -151,10 +152,15 @@ double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int
 /*
  *  Binary cost function which penalizes collisions.
  */
-double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
-	if(nearest < 2*VEHICLE_RADIUS)
+	if(nearest < 2*VEHICLE_RADIUS){
+		if(verbose){
+			cout<<"Error:  collision_cost,nearest "<< nearest <<endl;
+		}
 		return 1.0;
+	}
+
 	else
 		return 0.0;
 }
@@ -162,12 +168,12 @@ double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predi
  * Penalizes getting close to other vehicles.
  */
 
-double buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
 	return logistic(2*VEHICLE_RADIUS / nearest);
 }
 
-double stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	const vector<double> &d_coeffs = traj.d_coeff;
 	double t = traj.t;
 	vector<double> all_ds = {};
@@ -180,12 +186,16 @@ double stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &p
 	auto min_d = std::min_element(std::begin(all_ds), std::end(all_ds));
 
 	if(*max_d <= MAX_D && *min_d >=MIN_D){
+
 		return 0;
+	}
+	if(verbose){
+		cout<<"Error:  stays_on_road_cost, max/min "<< *max_d<<","<< *min_d <<endl;
 	}
 	return 1;
 }
 
-double exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 	double t = traj.t;
@@ -201,11 +211,14 @@ double exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehic
 	if(*max_v < SPEED_LIMIT && *min_v > MIN_SPEED){
 		return 0;
 	}
+	if(verbose){
+		cout<<"Error:  exceeds_speed_limit_cost, max_v/min_v "<< *max_v<<","<< *min_v <<endl;
+	}
 	return 1;
 }
 
 
-double total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
@@ -229,7 +242,7 @@ double total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &pre
 }
 
 
-double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
@@ -243,13 +256,17 @@ double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predi
 
 	auto max_acc = std::max_element(std::begin(all_as), std::end(all_as));
 	if (abs(*max_acc) > MAX_ACCEL){
+		if(verbose){
+			cout<<"Error:  max_accel_cost, max_acc "<< *max_acc <<endl;
+		}
+
 		return 1;
 	}else{
 		return 0;
 	}
 }
 
-double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
@@ -264,7 +281,7 @@ double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &pred
 
 	for(int i=0; i< 100; i++){
 		cur_t = dt * i;
-		double jerk = to_equation(s_dot_dot_coeffs, cur_t);
+		double jerk = to_equation(s_dot_dot_dot_coeffs, cur_t);
 		total_jerks += abs(jerk*dt);
 	}
 
@@ -274,7 +291,7 @@ double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &pred
 
 }
 
-double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
 	vector<double> s_dot_coeffs = differentiate(traj.s_coeff);
 
 	vector<double> s_dot_dot_coeffs = differentiate(s_dot_coeffs);
@@ -290,6 +307,10 @@ double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predic
 
 	auto max_jerk = std::max_element(std::begin(all_jerks), std::end(all_jerks));
 	if (abs(*max_jerk) > MAX_JERK){
+		if(verbose){
+			cout<<"Error:  max_jerk_cost, max_jerk "<< *max_jerk <<endl;
+		}
+
 		return 1;
 	}else{
 		return 0;

@@ -5,6 +5,9 @@
 
 #include "Eigen/Dense"
 #include "Trajectory.h"
+#include "Helper.h"
+#include <iterator>
+#include "TrjCost.h"
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -35,54 +38,61 @@ bool close_enough(vector< double > poly, vector<double> target_poly, double eps=
 
 struct test_case {
 
-		vector<double> start;
-		vector<double> end;
-		double T;
+	vector<double> start;
+	vector<double> end;
+	double T;
 };
 
 vector< vector<double> > answers = {{0.0, 10.0, 0.0, 0.0, 0.0, 0.0},{0.0,10.0,0.0,0.0,-0.625,0.3125},{5.0,10.0,1.0,-3.0,0.64,-0.0432}};
 
+std::ostream& operator<< (std::ostream& out, const TrjObject& trj) {
+	out<<"s_coeff "<<trj.s_coeff<<endl;
+	out<<"d_coeff "<<trj.d_coeff<<endl;
+	out<<"t "<<trj.t<<endl;
+	out<<"unperturbed_s "<<trj.unperturbed_s<<endl;
+	out<<"unperturbed_d "<<trj.unperturbed_d<<endl;
+	out<<"unperturbed_t "<<trj.unperturbed_t<<endl;
+	out<<"s_goal "<<trj.s_goal<<endl;
+	out<<"d_goal "<<trj.d_goal<<endl;
+
+	double t = trj.t;
+	vector<double> s = trj.s_coeff;
+	vector<double> s_dot = differentiate(s);
+	vector<double> s_d_dot = differentiate(s_dot);
+
+
+	vector<double> S = {to_equation(s, t), to_equation(s_dot,t), to_equation(s_d_dot,t)};
+	out<<"S "<<S<<endl;
+
+	vector<double> d = trj.d_coeff;
+	vector<double> d_dot = differentiate(d);
+	vector<double> d_d_dot = differentiate(d_dot);
+
+
+	vector<double> D = {to_equation(d, t), to_equation(d_dot,t), to_equation(d_d_dot,t)};
+	out<<"D "<<D<<endl;
+
+	return out;
+}
+
+
 int main() {
 
-	//create test cases
-
-	vector< test_case > tc;
-
-	test_case tc1;
-	tc1.start = {0,10,0};
-	tc1.end = {10,10,0};
-	tc1.T = 1;
-	tc.push_back(tc1);
-
-	test_case tc2;
-	tc2.start = {0,10,0};
-	tc2.end = {20,15,20};
-	tc2.T = 2;
-	tc.push_back(tc2);
-
-	test_case tc3;
-	tc3.start = {5,10,2};
-	tc3.end = {-30,-20,-4};
-	tc3.T = 5;
-	tc.push_back(tc3);
-
-	bool total_correct = true;
 	Trajectory trj;
-	for(int i = 0; i < tc.size(); i++)
-	{
-		vector< double > jmt = trj.JMT(tc[i].start, tc[i].end, tc[i].T);
-		bool correct = close_enough(jmt,answers[i]);
-		total_correct &= correct;
+	//create test cases
+	double T = 5;
 
-	}
-	if(!total_correct)
-	{
-		cout << "Try again!" << endl;
-	}
-	else
-	{
-		cout << "Nice work!" << endl;
-	}
+	Vehicle vehicle({200,10,0, 2,0,0});
+	std::map<int, Vehicle> predictions;
+	predictions[0] = vehicle;
+	vector<double> start_s = {0, 10, 0};
+
+	vector<double> start_d = {2, 0, 0};
+	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
+
+	cout<<endl<<"best:"<<endl<<best<<endl;
+	double best_cost = trj.calculate_cost(best, predictions, true);
+	cout<<"best cost "<<best_cost<<endl;
 
 	return 0;
 }

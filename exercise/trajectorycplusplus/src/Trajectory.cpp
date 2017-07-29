@@ -14,6 +14,7 @@
 #include "Eigen/Dense"
 #include "TrjCost.h"
 #include "Constants.h"
+#include "Helper.h"
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -35,16 +36,16 @@ std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
 
 Trajectory::Trajectory() {
 	m_cost_map["time_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["s_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["d_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["max_jerk_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["total_jerk_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["collision_cost"] = CostFuncWeight(&time_diff_cost, 10);
-	m_cost_map["buffer_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["max_accel_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["total_accel_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["exceeds_speed_limit_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["stays_on_road_cost"] = CostFuncWeight(&time_diff_cost, 1);
+	m_cost_map["s_diff_cost"] = CostFuncWeight(&s_diff_cost, 1);
+	m_cost_map["d_diff_cost"] = CostFuncWeight(&d_diff_cost, 1);
+	m_cost_map["max_jerk_cost"] = CostFuncWeight(&max_jerk_cost, 1);
+	m_cost_map["total_jerk_cost"] = CostFuncWeight(&total_jerk_cost, 1);
+	m_cost_map["collision_cost"] = CostFuncWeight(&collision_cost, 10);
+	m_cost_map["buffer_cost"] = CostFuncWeight(&buffer_cost, 1);
+	m_cost_map["max_accel_cost"] = CostFuncWeight(&max_accel_cost, 1);
+	m_cost_map["total_accel_cost"] = CostFuncWeight(&total_accel_cost, 1);
+	m_cost_map["exceeds_speed_limit_cost"] = CostFuncWeight(&exceeds_speed_limit_cost, 1);
+	m_cost_map["stays_on_road_cost"] = CostFuncWeight(&stays_on_road_cost, 1);
 
 
 }
@@ -149,6 +150,8 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 		trjobj.unperturbed_s = goal.unperturbed_s;
 		trjobj.unperturbed_d = goal.unperturbed_d;
 		trjobj.unperturbed_t = T;
+		trjobj.s_goal = goal.s_goal;
+		trjobj.d_goal = goal.d_goal;
 
 		trajectories.push_back(trjobj);
 	}
@@ -157,8 +160,10 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 	TrjObject best;
 	for(auto &trj: trajectories ){
 		double cost = calculate_cost(trj, predictions);
+		cout<<"s_goal "<<trj.s_goal<<"d_goal "<<trj.d_goal << "t "<<trj.t <<"cost "<<cost<<endl;
 		if(cost < min_cost){
 			best =trj;
+			min_cost = cost;
 		}
 	}
 	return best;
@@ -169,7 +174,7 @@ double Trajectory::calculate_cost(const TrjObject &trajectory,  const std::map<i
 	double cost = 0;
 	for (auto& kv : m_cost_map){
 		auto cost_func_pair = kv.second;
-		double new_cost = cost_func_pair.weight * cost_func_pair.cost_func(trajectory, predictions);
+		double new_cost = cost_func_pair.weight * cost_func_pair.cost_func(trajectory, predictions, verbose);
 		cost += new_cost;
 		if(verbose){
 			cout<< "cost for "<<kv.first << " is "<< new_cost << endl;
@@ -199,6 +204,7 @@ std::vector<TrjGoal> Trajectory::perturb_goals(const std::vector<double> &start_
 		}
 
 		all_goals.push_back(TrjGoal(goal_s,goal_d,t,goal_s,goal_d));
+		cout<<"t "<< t <<", goal "<<goal_s<<","<< goal_d<<", unperturbed "<<goal_s<<","<< goal_d<<endl;
 		for(int i=0; i<N_SAMPLES;i++){
 			std::vector<std::vector<double>> perturbed = perturb_goal(goal_s, goal_d);
 
@@ -224,6 +230,8 @@ std::vector<std::vector<double>> Trajectory::perturb_goal(const std::vector<doub
 		normal_distribution<double> dist_x(x, sigma_s);
 		new_s_goal.push_back(dist_x(gen));
 	}
+	//let's not change the acceleration
+	new_s_goal[2] = goal_s[2];
 	//random goal d
 	//	vector<double> new_s_goal = {};
 	//	for(int i=0; i< goal_d.size(); i++){
@@ -254,7 +262,10 @@ TrjObject Trajectory::follow_vehicle(const std::vector<double> &start_s, const s
 	return PTG(start_s, start_d,all_goals, T,predictions);
 }
 int	Trajectory::get_lane_num(double d){
-	return int(d / 4);
+	return int(d / LANE_WIDTH);
+}
+double Trajectory::get_lane_dist(int lane_id){
+	return lane_id*LANE_WIDTH + LANE_WIDTH/2;
 }
 TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		double T, std::map<int, Vehicle> &predictions){
@@ -264,6 +275,7 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 	double d = start_d[0];
 	int leading_id = -1;
 	double distance = INFINITY;
+	//Find leadig vehicle in the same lane
 	for(auto &kv: predictions){
 		Vehicle &v = kv.second;
 		if(get_lane_num(v.start_state[3]) != get_lane_num(d) || v.start_state[0] < s){
@@ -281,13 +293,17 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 		}
 	}
 
+	//follow the vehicle or follow the goal
 	if(has_target){
+		cout<<"keep lane, has target"<<endl;
 		int target_vehicle = leading_id;
 		vector<double> delta = {-SAFE_DISTANCE_BUFFER*3, 0,0,0,0,0};
 		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
 	}else{
+		cout<<"keep lane, no target"<<endl;
 		vector<double> goal_s = {s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0};
-		vector<double> goal_d = {0,0,0};
+
+		vector<double> goal_d = {get_lane_dist(get_lane_num(start_d[0])),0,0};
 		return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
 	}
 

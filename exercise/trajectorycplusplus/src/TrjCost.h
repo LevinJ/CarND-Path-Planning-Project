@@ -12,19 +12,19 @@
 #include "Helper.h"
 
 
-	double time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
+	double time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double s_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
 
-	double d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
+	double d_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
 
-	double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
-	double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
+	double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double stays_on_road_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double total_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double total_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
+	double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
 
 	double nearest_approach(const TrjObject &traj, const Vehicle &vehicle);
 	double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions);

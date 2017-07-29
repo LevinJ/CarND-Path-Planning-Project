@@ -130,11 +130,13 @@ def perturb_goals(start_s, start_d, T, goal_s, goal_d, target_vehicle, delta,pre
             goal_d = target_state[3:]
         
         all_goals.append((goal_s,goal_d, t,goal_s,goal_d))
+        print("t {}, goal {} {}, unperturbed {} {}".format(t, goal_s, goal_d, goal_s, goal_d))
         for _ in range(N_SAMPLES):
             perturbed = perturb_goal(goal_s, goal_d)
            
             all_goals.append((perturbed[0], perturbed[1], t,goal_s,goal_d))
         t += timestep
+    
     return all_goals
 
 def follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions):

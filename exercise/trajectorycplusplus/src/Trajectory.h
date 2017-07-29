@@ -14,7 +14,7 @@
 #include "Helper.h"
 using namespace std;
 
-typedef  double (*CostFunPtr)(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
+typedef  double (*CostFunPtr)(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose);
 class CostFuncWeight{
 public:
 	CostFuncWeight(){
@@ -37,14 +37,15 @@ public:
 	std::vector<double> JMT(std::vector< double> start, std::vector <double> end, double T);
 	TrjObject LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
 			double T, std::map<int, Vehicle> &predictions, bool prepare=true, bool left= true);
+	double calculate_cost(const TrjObject &trajectory,  const std::map<int, Vehicle> &predictions,
+				bool verbose=false);
 
 private:
 
 	std::map<std::string, CostFuncWeight> m_cost_map;
 	TrjObject PTG(const std::vector<double> &start_s, const std::vector<double> &start_d,
 			const std::vector<TrjGoal> &all_goals, double T,const std::map<int, Vehicle> &predictions);
-	double calculate_cost(const TrjObject &trajectory,  const std::map<int, Vehicle> &predictions,
-			bool verbose=false);
+
 	std::vector<TrjGoal> perturb_goals(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
 			std::vector<double> &goal_s, std::vector<double> &goal_d,
 			int target_vehicle, const std::vector<double> &delta, std::map<int, Vehicle> &predictions);
@@ -54,6 +55,7 @@ private:
 	TrjObject follow_vehicle(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
 			int target_vehicle, const std::vector<double> &delta,  std::map<int, Vehicle> &predictions);
 	int	get_lane_num(double d);
+	double get_lane_dist(int lane_id);
 
 };
 
