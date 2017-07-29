@@ -35,6 +35,8 @@ public:
 	TrjObject keep_lane(const std::vector<double> &start_s, const std::vector<double> &start_d,
 			double T, std::map<int, Vehicle> &predictions);
 	std::vector<double> JMT(std::vector< double> start, std::vector <double> end, double T);
+	TrjObject LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
+			double T, std::map<int, Vehicle> &predictions, bool prepare=true, bool left= true);
 
 private:
 

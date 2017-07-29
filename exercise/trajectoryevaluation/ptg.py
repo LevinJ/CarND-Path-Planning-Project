@@ -67,10 +67,11 @@ def LC(start_s, start_d, T, predictions, prepare=True, left= True):
     #no target
     if prepare:
         return keep_lane(start_s, start_d, T, predictions)
-    else:
-        goal_s = [s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0]
-        goal_d = [target_lane*LANE_WIDTH + LANE_WIDTH/2,0,0]
-        return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
+    
+    #lane change
+    goal_s = [s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0]
+    goal_d = [target_lane*LANE_WIDTH + LANE_WIDTH/2,0,0]
+    return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
     
              
 def keep_lane(start_s, start_d, T, predictions):

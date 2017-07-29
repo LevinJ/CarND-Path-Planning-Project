@@ -293,3 +293,76 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 
 }
 
+TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
+		double T, std::map<int, Vehicle> &predictions, bool prepare, bool left){
+	bool has_target = false;
+	double s = start_s[0];
+	double d = start_d[0];
+	int target_lane = -1;
+	std::vector<double> delta = {};
+	if(left)
+		target_lane = get_lane_num(d) + 1;
+	else
+		target_lane = get_lane_num(d) - 1;
+	if(prepare){
+		if(left)
+			delta = {0, 0,0,-LANE_WIDTH,0,0};
+		else
+			delta = {0, 0,0,LANE_WIDTH,0,0};
+
+	}
+
+	else{
+		delta = {0, 0,0,0,0,0};
+	}
+	int closetest_id = -1;
+	double distance = INFINITY;
+	for(auto &kv: predictions){
+		Vehicle &v = kv.second;
+		if(get_lane_num(v.start_state[3]) != target_lane ){
+			continue;
+		}
+		if((abs(v.start_state[0] -s))< distance){
+			distance = abs(v.start_state[0] -s);
+			closetest_id = kv.first;
+		}
+	}
+	double max_distance = 0;
+	double delta_s = 0;
+	if(closetest_id !=-1){
+		if(predictions[closetest_id].start_state[0] < s){
+			max_distance = predictions[closetest_id].start_state[1] * T;
+			delta_s = SAFE_DISTANCE_BUFFER;
+
+		}else{
+			max_distance = (SPEED_LIMIT - predictions[closetest_id].start_state[1])* T;
+			delta_s = -SAFE_DISTANCE_BUFFER;
+
+		}
+		if(distance < max_distance){
+			has_target = true;
+		}
+
+	}
+
+	if(has_target){
+		int target_vehicle = closetest_id;
+		if(not prepare){
+			delta[0] = delta_s;
+		}
+		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
+
+	}
+
+
+	if(prepare){
+		return keep_lane(start_s, start_d, T, predictions);
+	}
+
+	//lane change
+	vector<double> goal_s = {s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0};
+	vector<double> goal_d = {target_lane*LANE_WIDTH + LANE_WIDTH/2,0,0};
+	return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+
+}
+
