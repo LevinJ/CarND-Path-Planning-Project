@@ -9,6 +9,7 @@
 #define SRC_TRJMGR_H_
 
 #include <vector>
+#include "Trajectory.h"
 
 class TrjMgr {
 public:
@@ -20,6 +21,18 @@ public:
 	virtual ~TrjMgr();
 	std::vector<double> m_next_x_vals;
 	std::vector<double> m_next_y_vals;
+	vector<double> m_maps_s;
+	vector<double> m_maps_x;
+	vector<double> m_maps_y;
+private:
+	std::vector<std::vector<double>> get_start_state(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
+			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
+	std::map<int, Vehicle> get_predictons(const std::vector<std::vector<double>> &sensor_fusion);
+	void convert_next_waypoints(const TrjObject &trjobj);
+	Trajectory m_trajectory;
+
+	vector<double> getXY_Q(double s, double d);
+
 };
 
 #endif /* SRC_TRJMGR_H_ */

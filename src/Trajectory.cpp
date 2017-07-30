@@ -160,7 +160,7 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 	TrjObject best;
 	for(auto &trj: trajectories ){
 		double cost = calculate_cost(trj, predictions);
-		cout<<"s_goal "<<trj.s_goal<<"d_goal "<<trj.d_goal << "t "<<trj.t <<"cost "<<cost<<endl;
+//		cout<<"s_goal "<<trj.s_goal<<"d_goal "<<trj.d_goal << "t "<<trj.t <<"cost "<<cost<<endl;
 		if(cost < min_cost){
 			best =trj;
 			min_cost = cost;
@@ -204,7 +204,7 @@ std::vector<TrjGoal> Trajectory::perturb_goals(const std::vector<double> &start_
 		}
 
 		all_goals.push_back(TrjGoal(goal_s,goal_d,t,goal_s,goal_d));
-		cout<<"t "<< t <<", goal "<<goal_s<<","<< goal_d<<", unperturbed "<<goal_s<<","<< goal_d<<endl;
+//		cout<<"t "<< t <<", goal "<<goal_s<<","<< goal_d<<", unperturbed "<<goal_s<<","<< goal_d<<endl;
 		for(int i=0; i<N_SAMPLES;i++){
 			std::vector<std::vector<double>> perturbed = perturb_goal(goal_s, goal_d);
 
