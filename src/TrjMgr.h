@@ -32,6 +32,11 @@ private:
 	Trajectory m_trajectory;
 
 	vector<double> getXY_Q(double s, double d);
+	int m_last_waypoints_num;
+	TrjObject m_last_trjobj;
+	std::vector<std::vector<double>> process_prevpath(const std::vector<double> &previous_path_x,
+			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
+	vector<double> getFrenet_Q(double x, double y, double theta);
 
 };
 

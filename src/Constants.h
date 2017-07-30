@@ -30,6 +30,9 @@ const float MIN_D = 0;
 
 const float LANE_WIDTH = 4;
 
+const int REUSE_PREV_POINTS_NUM = 50;
+const double FRAME_UPDATE_TIME = 0.02;
+
 
 
 #endif /* EXERCISE_TRAJECTORYCPLUSPLUS_SRC_CONSTANTS_H_ */

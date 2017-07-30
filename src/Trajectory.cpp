@@ -166,6 +166,7 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 			min_cost = cost;
 		}
 	}
+	calculate_cost(best, predictions, true);
 	return best;
 }
 
@@ -300,8 +301,13 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 		vector<double> delta = {-SAFE_DISTANCE_BUFFER*3, 0,0,0,0,0};
 		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
 	}else{
-		cout<<"keep lane, no target"<<endl;
-		vector<double> goal_s = {s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0};
+		double target_speed = (SPEED_LIMIT + start_s[1])/2;
+		if (target_speed > SPEED_LIMIT){
+			target_speed = SPEED_LIMIT;
+		}
+		cout<<"keep lane, no target, "<<target_speed<<endl;
+		vector<double> goal_s = {s+ target_speed*T, SPEED_LIMIT, 0};
+
 
 		vector<double> goal_d = {get_lane_dist(get_lane_num(start_d[0])),0,0};
 		return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);

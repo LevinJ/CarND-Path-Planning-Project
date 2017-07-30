@@ -83,7 +83,7 @@ int main() {
 		if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
 			auto s = hasData(data);
-			std::cout<<s<<std::endl;
+//			std::cout<<s<<std::endl;
 
 			if (s != "") {
 				auto j = json::parse(s);

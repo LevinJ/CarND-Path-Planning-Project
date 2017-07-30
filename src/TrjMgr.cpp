@@ -8,8 +8,40 @@
 #include "TrjMgr.h"
 #include "cmath"
 #include "TrjCost.h"
+#include "Helper.h"
+#include "Constants.h"
 
 using namespace std;
+
+std::ostream& operator<< (std::ostream& out, const TrjObject& trj) {
+	out<<"s_coeff "<<trj.s_coeff<<endl;
+	out<<"d_coeff "<<trj.d_coeff<<endl;
+	out<<"t "<<trj.t<<endl;
+	out<<"unperturbed_s "<<trj.unperturbed_s<<endl;
+	out<<"unperturbed_d "<<trj.unperturbed_d<<endl;
+	out<<"unperturbed_t "<<trj.unperturbed_t<<endl;
+	out<<"s_goal "<<trj.s_goal<<endl;
+	out<<"d_goal "<<trj.d_goal<<endl;
+
+	double t = trj.t;
+	vector<double> s = trj.s_coeff;
+	vector<double> s_dot = differentiate(s);
+	vector<double> s_d_dot = differentiate(s_dot);
+
+
+	vector<double> S = {to_equation(s, t), to_equation(s_dot,t), to_equation(s_d_dot,t)};
+	out<<"S "<<S<<endl;
+
+	vector<double> d = trj.d_coeff;
+	vector<double> d_dot = differentiate(d);
+	vector<double> d_d_dot = differentiate(d_dot);
+
+
+	vector<double> D = {to_equation(d, t), to_equation(d_dot,t), to_equation(d_d_dot,t)};
+	out<<"D "<<D<<endl;
+
+	return out;
+}
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
@@ -142,7 +174,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 }
 
 TrjMgr::TrjMgr() {
-	// TODO Auto-generated constructor stub
+	m_last_waypoints_num = -1;
 
 }
 
@@ -190,12 +222,57 @@ std::vector<std::vector<double>> TrjMgr::get_start_state(const std::vector<doubl
 	double car_d = car_state[3];
 	double car_yaw = car_state[4];
 	double car_speed = car_state[5];
-	cout<<"previous_path_x"<<previous_path_x<<endl;
 
-	return {{car_s,car_speed,0},{car_d,0,0}};
+	//get starting point from car param
+	vector<double> start_s = {car_s,car_speed,0};
+	vector<double> start_d = {car_d,0,0};
+	cout<<"car_s, car_d"<<start_s<<","<<start_d<<endl;
+
+
+	//get starting point from pre path
+	process_prevpath(previous_path_x, previous_path_y, end_path_s, end_path_d);
+
+	//get starting point based on last stored path
+	double cur_t = (m_last_waypoints_num - previous_path_x.size()) * FRAME_UPDATE_TIME;
+	vector<double> s_coeff = m_last_trjobj.s_coeff;
+	vector<double> s_dot_coeff = differentiate(s_coeff);
+	vector<double> s_dot_dot_coeff = differentiate(s_dot_coeff);
+	start_s = {to_equation(s_coeff, cur_t),to_equation(s_dot_coeff, cur_t),to_equation(s_dot_dot_coeff, cur_t)};
+
+	vector<double> d_coeff = m_last_trjobj.d_coeff;
+	vector<double> d_dot_coeff = differentiate(d_coeff);
+	vector<double> d_dot_dot_coeff = differentiate(d_dot_coeff);
+	start_d = {to_equation(d_coeff, cur_t),to_equation(d_dot_coeff, cur_t),to_equation(d_dot_dot_coeff, cur_t)};
+
+	cout<<"estimated_s, estimated_d"<<start_s<<","<<start_d<<endl;
+
+
+
+
+
+	cout<<"consumed "<<m_last_waypoints_num - previous_path_x.size()<<endl;
+
+	return {start_s,start_d};
+}
+
+std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<double> &previous_path_x,
+		const std::vector<double> &previous_path_y, double end_path_s,double end_path_d){
+	vector<double> start_s = {};
+	vector<double> start_d = {};
+	for(int i=0; i< previous_path_x.size(); i++){
+		vector<double> sd = getFrenet_Q(previous_path_x[i], previous_path_y[i], 0);
+		cout<<"prev s,d "<<sd[0]<<", "<<sd[1]<<endl;
+	}
+
+
+
+
+	return {start_s,start_d};
+
 }
 
 void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
+	cout<<endl<<"best trajectory:"<<endl<<trjobj<<endl;
 	m_next_x_vals = {};
 	m_next_y_vals = {};
 	double t = trjobj.t;
@@ -209,12 +286,20 @@ void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
 		vector<double> xy = getXY_Q(cur_s, cur_d);
 		m_next_x_vals.push_back(xy[0]);
 		m_next_y_vals.push_back(xy[1]);
+		cout<<"cur_s, cur_d "<<cur_s<<","<<cur_d<<endl;
 		cur_t += dt;
 	}
+	m_last_waypoints_num = m_next_x_vals.size();
+	m_last_trjobj = trjobj;
+//	cout<<"m_next_x_vals size, "<<m_next_x_vals.size()<<endl;
 
 }
 
 vector<double> TrjMgr::getXY_Q(double s, double d){
 	return getXY(s, d, m_maps_s, m_maps_x, m_maps_y);
+}
+
+vector<double> TrjMgr::getFrenet_Q(double x, double y, double theta){
+	return getFrenet( x,  y,  theta, m_maps_x, m_maps_y);
 }
 
