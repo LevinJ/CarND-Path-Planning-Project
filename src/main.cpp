@@ -8,6 +8,7 @@
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
+#include "TrjMgr.h"
 
 using namespace std;
 
@@ -248,42 +249,54 @@ int main() {
 
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
+          	TrjMgr trjmgr;
+          	const std::vector<double> &car_state = {car_x, car_y,car_s,car_d,car_yaw,car_speed};
+          	trjmgr.generate_next_waypoints(car_state,previous_path_x,previous_path_y,end_path_s,end_path_d,sensor_fusion);
+          	next_x_vals = trjmgr.m_next_x_vals;
+          	next_y_vals = trjmgr.m_next_y_vals;
 
-          	double pos_x;
-          	double pos_y;
-          	double angle;
-          	int path_size = previous_path_x.size();
+//
+//			cout<<"Previous last state: "<<previous_path_x[]<<","<<previous_path_y<<","<< car_s<<","<<car_d<<endl;
+//			vector<double> xy = getXY(end_path_s, end_path_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+//			cout<<xy[0]<<","<<xy[1]<<endl;
+//			vector<double> sd = getFrenet(car_x, car_y, car_yaw, map_waypoints_x, map_waypoints_y);
+//			cout<<sd[0]<<","<<sd[1]<<endl;
 
-          	for(int i = 0; i < path_size; i++)
-          	{
-          		next_x_vals.push_back(previous_path_x[i]);
-          		next_y_vals.push_back(previous_path_y[i]);
-          	}
-
-          	if(path_size == 0)
-          	{
-          		pos_x = car_x;
-          		pos_y = car_y;
-          		angle = deg2rad(car_yaw);
-          	}
-          	else
-          	{
-          		pos_x = previous_path_x[path_size-1];
-          		pos_y = previous_path_y[path_size-1];
-
-          		double pos_x2 = previous_path_x[path_size-2];
-          		double pos_y2 = previous_path_y[path_size-2];
-          		angle = atan2(pos_y-pos_y2,pos_x-pos_x2);
-          	}
-
-          	double dist_inc = 0.5;
-          	for(int i = 0; i < 50-path_size; i++)
-          	{
-          		next_x_vals.push_back(pos_x+(dist_inc)*cos(angle+(i+1)*(pi()/100)));
-          		next_y_vals.push_back(pos_y+(dist_inc)*sin(angle+(i+1)*(pi()/100)));
-          		pos_x += (dist_inc)*cos(angle+(i+1)*(pi()/100));
-          		pos_y += (dist_inc)*sin(angle+(i+1)*(pi()/100));
-          	}
+//          	double pos_x;
+//          	double pos_y;
+//          	double angle;
+//          	int path_size = previous_path_x.size();
+//
+//          	for(int i = 0; i < path_size; i++)
+//          	{
+//          		next_x_vals.push_back(previous_path_x[i]);
+//          		next_y_vals.push_back(previous_path_y[i]);
+//          	}
+//
+//          	if(path_size == 0)
+//          	{
+//          		pos_x = car_x;
+//          		pos_y = car_y;
+//          		angle = deg2rad(car_yaw);
+//          	}
+//          	else
+//          	{
+//          		pos_x = previous_path_x[path_size-1];
+//          		pos_y = previous_path_y[path_size-1];
+//
+//          		double pos_x2 = previous_path_x[path_size-2];
+//          		double pos_y2 = previous_path_y[path_size-2];
+//          		angle = atan2(pos_y-pos_y2,pos_x-pos_x2);
+//          	}
+//
+//          	double dist_inc = 0.5;
+//          	for(int i = 0; i < 50-path_size; i++)
+//          	{
+//          		next_x_vals.push_back(pos_x+(dist_inc)*cos(angle+(i+1)*(pi()/100)));
+//          		next_y_vals.push_back(pos_y+(dist_inc)*sin(angle+(i+1)*(pi()/100)));
+//          		pos_x += (dist_inc)*cos(angle+(i+1)*(pi()/100));
+//          		pos_y += (dist_inc)*sin(angle+(i+1)*(pi()/100));
+//          	}
 
 //          	double dist_inc = 0.5;
 //          	for(int i = 0; i < 50; i++)
