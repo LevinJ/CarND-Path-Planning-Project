@@ -251,6 +251,8 @@ std::vector<std::vector<double>> TrjMgr::get_start_state(const std::vector<doubl
 	double car_d = car_state[3];
 	double car_yaw = car_state[4];
 	double car_speed = car_state[5];
+	//from miles/hour to meter/s
+	car_speed = (car_speed * 1609.34)/3600;
 
 	//get starting point from car param
 	vector<double> start_s = {car_s,car_speed,0};

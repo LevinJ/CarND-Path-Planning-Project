@@ -298,8 +298,17 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 	if(has_target){
 
 		int target_vehicle = leading_id;
-		cout<<"keep lane, has target "<<leading_id<<endl;
-		vector<double> delta = {-SAFE_DISTANCE_BUFFER*3, 0,0,0,0,0};
+		//make we do not change lanes
+		double delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[target_vehicle].start_state[3];
+		double deta_s = predictions[target_vehicle].start_state[0] - start_s[0];
+		if(deta_s < SAFE_DISTANCE_BUFFER){
+			//let's get away from the leading vehicle till a safe distance by and by
+			deta_s = deta_s + 5;
+		}else{
+			deta_s = SAFE_DISTANCE_BUFFER;
+		}
+		vector<double> delta = {-deta_s, 0,0,0,0,0};
+		cout<<"keep lane, has target "<<leading_id<<" delta, "<<delta<<endl;
 		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
 	}else{
 		double target_speed = (SPEED_LIMIT + start_s[1])/2;
