@@ -23,7 +23,7 @@ const float EXPECTED_ACC_IN_ONE_SEC = 1;// # m/s
 
 const float SPEED_LIMIT = 22;
 const float VEHICLE_RADIUS = 1.5;// # model vehicle as circle to simplify collision detection
-//safe driving 3 seconds rules
+//for the sake of safe driving, we should apply 3 seconds rules
 const float SAFE_DISTANCE_BUFFER = 3*SPEED_LIMIT;
 
 const float MAX_D = 12;//maximum lateral distance

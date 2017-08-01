@@ -95,9 +95,21 @@ def keep_lane(start_s, start_d, T, predictions):
             has_target = True
     
     if has_target:
+#         target_vehicle = leading_id
+#         delta = [-SAFE_DISTANCE_BUFFER, 0,0,0,0,0]
+#         return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions)
         target_vehicle = leading_id
-        delta = [-SAFE_DISTANCE_BUFFER*3, 0,0,0,0,0]
-        return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions)
+        delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[target_vehicle].start_state[3];
+        deta_s = predictions[target_vehicle].start_state[0] - start_s[0];
+        if deta_s < SAFE_DISTANCE_BUFFER:
+            #let's get away from the leading vehicle till a safe distance by and by
+            deta_s = deta_s + 5;
+        else:
+            deta_s = SAFE_DISTANCE_BUFFER;
+        
+        delta = [-deta_s, 0,0,delta_d,0,0];
+        print("keep lane, has target " + str(leading_id) + " delta, " + str(delta));
+        return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
        
     else:
         goal_s = [s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0]
@@ -105,7 +117,10 @@ def keep_lane(start_s, start_d, T, predictions):
         return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
         
         
-    
+
+def get_lane_dist(lane_id):
+    return lane_id*LANE_WIDTH + LANE_WIDTH/2;
+   
 def follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions):
     
     all_goals = perturb_goals(start_s, start_d, T, None, None, target_vehicle, delta,predictions)

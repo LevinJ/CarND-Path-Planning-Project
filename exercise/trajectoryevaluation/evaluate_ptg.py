@@ -19,25 +19,25 @@ def main():
 # 	best = keep_lane(start_s, start_d, T, predictions)
 
 
-
-# 	vehicle = Vehicle([60,10,0, 2,0,0])
-# 	predictions = {0: vehicle}
-# 	start_s = [0, 10, 0]
-# 	start_d = [2, 0, 0]
-# 	best = keep_lane(start_s, start_d, T, predictions)
+ 
+	vehicle = Vehicle([1428.49, 8.46735,0, 6.1615,0,0])
+	predictions = {0: vehicle}
+	start_s = [1390.32, 15.6035, -0.179908]
+	start_d = [6, -2.60548e-16, -5.4552e-17]
+	best = keep_lane(start_s, start_d, T, predictions)
 	
 	
 	
 	
 	
-	vehicle = Vehicle([150,20,0, 2,0,0])
-	vehicle_1 = Vehicle([100,10,0, 6,0,0])
-	predictions = {0: vehicle, 1:vehicle_1}
-# 	predictions = {0: vehicle}
-	start_s = [30, 10, 0]
-	start_d = [6, 0, 0]
-	best = LC(start_s, start_d, T, predictions, prepare=False, left= False)
-#  	
+# 	vehicle = Vehicle([150,20,0, 2,0,0])
+# 	vehicle_1 = Vehicle([100,10,0, 6,0,0])
+# 	predictions = {0: vehicle, 1:vehicle_1}
+# # 	predictions = {0: vehicle}
+# 	start_s = [30, 10, 0]
+# 	start_d = [6, 0, 0]
+# 	best = LC(start_s, start_d, T, predictions, prepare=False, left= False)
+# #  	
 	
 	
 
