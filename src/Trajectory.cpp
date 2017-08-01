@@ -276,7 +276,7 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 	double d = start_d[0];
 	int leading_id = -1;
 	double distance = INFINITY;
-	//Find leadig vehicle in the same lane
+	//Find leading vehicle in the same lane
 	for(auto &kv: predictions){
 		Vehicle &v = kv.second;
 		if(get_lane_num(v.start_state[3]) != get_lane_num(d) || v.start_state[0] < s){

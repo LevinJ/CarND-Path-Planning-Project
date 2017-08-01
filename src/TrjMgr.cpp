@@ -104,7 +104,7 @@ int NextWaypoint(double x, double y, double theta, vector<double> maps_x, vector
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
 vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x, vector<double> maps_y)
-										{
+												{
 	int next_wp = NextWaypoint(x,y, theta, maps_x,maps_y);
 
 	int prev_wp;
@@ -149,11 +149,11 @@ vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x
 
 	return {frenet_s,frenet_d};
 
-										}
+												}
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
 vector<double> getXY(double s, double d, const vector<double> &maps_s, const vector<double> &maps_x, const vector<double> &maps_y)
-										{
+												{
 	int prev_wp = -1;
 
 	while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) ))
@@ -177,7 +177,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 	return {x,y};
 
-										}
+												}
 
 TrjMgr::TrjMgr(const vector<double> &maps_s, const vector<double> &maps_x, vector<double> &maps_y,
 		const vector<double> &maps_dx, const vector<double> &maps_dy) {
@@ -211,13 +211,13 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 			previous_path_y, end_path_s, end_path_d);
 	std::vector<double> &start_s = start_state[0];
 	std::vector<double> &start_d = start_state[1];
-	std::map<int, Vehicle> predictions = get_predictons(sensor_fusion);
+	std::map<int, Vehicle> predictions = get_predictons(sensor_fusion, start_s[0]);
 	double T = 5;
 	TrjObject trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
 	convert_next_waypoints(trjobj);
 
 }
-std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<double>> &sensor_fusion){
+std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<double>> &sensor_fusion, double start_s){
 	std::map<int, Vehicle> predictions;
 	for (const auto& v : sensor_fusion)
 	{
@@ -229,13 +229,25 @@ std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<doub
 		double s = v[5];
 		double d = v[6];
 		double s_dot = sqrt(vx*vx + vy*vy);
+		if(d<0){
+			continue;
+		}
+
+		if(start_s <=MAX_S && start_s >= MAX_S - 2*SAFE_DISTANCE_BUFFER){
+			//if JMT start point happens to be at the last segment of the lap
+			//change traffic position accordingly so that leading vehicle can be properly detected
+			if(s>=0 && s<SAFE_DISTANCE_BUFFER){
+				cout << "last segment of the lap, adjust vehicle position, vehilce id="<< v_id
+						<<", s="<< s << " , new_s="<< s + MAX_S<<endl;
+				s = s + MAX_S;
+			}
+		}
+
 
 		//predict other traffic on the road into the future
 		//since we are planning JMT for the future
 		double new_s = s + s_dot * REUSE_PREV_POINTS_NUM * FRAME_UPDATE_TIME;
-		if(d<0){
-			continue;
-		}
+
 		cout<<"vehicle "<<v_id << " s, new_s, v, d "<< s << " , "<<new_s <<" , "<< s_dot <<"," << d << endl;
 		//assume the other proceed with constant velocity along the road
 		std::vector<double> start_state = {new_s, s_dot, 0, d, 0, 0};
