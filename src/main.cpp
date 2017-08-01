@@ -69,6 +69,19 @@ int main() {
 		map_waypoints_dx.push_back(d_x);
 		map_waypoints_dy.push_back(d_y);
 	}
+	// add extra waypoint to loop back to the beginning with overlap...
+	//This way we can have a a relatively smooth/accurate spline extrapolation around the end of the lap
+	map_waypoints_x.push_back(map_waypoints_x[0]);
+	map_waypoints_y.push_back(map_waypoints_y[0]);
+	map_waypoints_s.push_back(max_s);
+	map_waypoints_dx.push_back(map_waypoints_dx[0]);
+	map_waypoints_dy.push_back(map_waypoints_dy[0]);
+	map_waypoints_x.push_back(map_waypoints_x[1]);
+	map_waypoints_y.push_back(map_waypoints_y[1]);
+	map_waypoints_s.push_back(max_s+map_waypoints_s[1]);
+	map_waypoints_dx.push_back(map_waypoints_dx[1]);
+	map_waypoints_dy.push_back(map_waypoints_dy[1]);
+
 	TrjMgr trjmgr(map_waypoints_s, map_waypoints_x, map_waypoints_y, map_waypoints_dx, map_waypoints_dy);
 
 
