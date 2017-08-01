@@ -6,3 +6,4 @@ simulator/
 .pydevproject
 *.pyc
 .DS_Store
+data/.~lock.highway_map.csv#

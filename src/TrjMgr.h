@@ -13,7 +13,8 @@
 
 class TrjMgr {
 public:
-	TrjMgr();
+	TrjMgr(const vector<double> &maps_s, const vector<double> &maps_x, vector<double> &maps_y,
+			const vector<double> &maps_dx, const vector<double> &maps_dy);
 	void generate_next_waypoints(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
 			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d,
 			const std::vector<std::vector<double>> &sensor_fusion);
@@ -24,7 +25,14 @@ public:
 	vector<double> m_maps_s;
 	vector<double> m_maps_x;
 	vector<double> m_maps_y;
+	vector<double> m_maps_dx;
+	vector<double> m_maps_dy;
 private:
+
+	vector<double> convert_sd_to_xy(const double s, const double d);
+
+	vector<double> m_last_waypoints_s;
+	vector<double> m_last_waypoints_d;
 	std::vector<std::vector<double>> get_start_state(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
 			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
 	std::map<int, Vehicle> get_predictons(const std::vector<std::vector<double>> &sensor_fusion);

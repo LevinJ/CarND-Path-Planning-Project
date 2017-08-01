@@ -69,10 +69,9 @@ int main() {
 		map_waypoints_dx.push_back(d_x);
 		map_waypoints_dy.push_back(d_y);
 	}
-	TrjMgr trjmgr;
-	trjmgr.m_maps_s = map_waypoints_s;
-	trjmgr.m_maps_x = map_waypoints_x;
-	trjmgr.m_maps_y = map_waypoints_y;
+	TrjMgr trjmgr(map_waypoints_s, map_waypoints_x, map_waypoints_y, map_waypoints_dx, map_waypoints_dy);
+
+
 	h.onMessage([&trjmgr, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
 			uWS::OpCode opCode) {
 		// "42" at the start of the message means there's a websocket message event.
@@ -115,6 +114,12 @@ int main() {
 
 					vector<double> next_x_vals;
 					vector<double> next_y_vals;
+
+					static bool firsttime = true;
+					if(!firsttime){
+						return;
+					}
+					firsttime = false;
 
 					const std::vector<double> &car_state = {car_x, car_y,car_s,car_d,car_yaw,car_speed};
 					trjmgr.generate_next_waypoints(car_state,previous_path_x,previous_path_y,end_path_s,end_path_d,sensor_fusion);
