@@ -296,8 +296,9 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 
 	//follow the vehicle or follow the goal
 	if(has_target){
-		cout<<"keep lane, has target"<<endl;
+
 		int target_vehicle = leading_id;
+		cout<<"keep lane, has target "<<leading_id<<endl;
 		vector<double> delta = {-SAFE_DISTANCE_BUFFER*3, 0,0,0,0,0};
 		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
 	}else{

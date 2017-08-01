@@ -104,7 +104,7 @@ int NextWaypoint(double x, double y, double theta, vector<double> maps_x, vector
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
 vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x, vector<double> maps_y)
-						{
+										{
 	int next_wp = NextWaypoint(x,y, theta, maps_x,maps_y);
 
 	int prev_wp;
@@ -149,11 +149,11 @@ vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x
 
 	return {frenet_s,frenet_d};
 
-						}
+										}
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
 vector<double> getXY(double s, double d, const vector<double> &maps_s, const vector<double> &maps_x, const vector<double> &maps_y)
-						{
+										{
 	int prev_wp = -1;
 
 	while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) ))
@@ -177,7 +177,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 	return {x,y};
 
-						}
+										}
 
 TrjMgr::TrjMgr(const vector<double> &maps_s, const vector<double> &maps_x, vector<double> &maps_y,
 		const vector<double> &maps_dx, const vector<double> &maps_dy) {
@@ -212,27 +212,35 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	std::vector<double> &start_s = start_state[0];
 	std::vector<double> &start_d = start_state[1];
 	std::map<int, Vehicle> predictions = get_predictons(sensor_fusion);
-	double T = 200;
+	double T = 5;
 	TrjObject trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
 	convert_next_waypoints(trjobj);
 
 }
 std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<double>> &sensor_fusion){
 	std::map<int, Vehicle> predictions;
-	//	for (const auto& v : sensor_fusion)
-	//	{
-	//		int v_id = v[0];
-	//		double x = v[1];
-	//		double y = v[2];
-	//		double vx = v[3];
-	//		double vy = v[4];
-	//		double s = v[5];
-	//		double d = v[6];
-	//		double s_dot = sqrt(vx*vx + vy*vy);
-	//		//assume the other proceed with constant velocity along the road
-	//		std::vector<double> start_state = {s, s_dot, 0, d, 0, 0};
-	//		predictions[v_id] = Vehicle(start_state);
-	//	}
+	for (const auto& v : sensor_fusion)
+	{
+		int v_id = v[0];
+		double x = v[1];
+		double y = v[2];
+		double vx = v[3];
+		double vy = v[4];
+		double s = v[5];
+		double d = v[6];
+		double s_dot = sqrt(vx*vx + vy*vy);
+
+		//predict other traffic on the road into the future
+		//since we are planning JMT for the future
+		double new_s = s + s_dot * REUSE_PREV_POINTS_NUM * FRAME_UPDATE_TIME;
+		if(d<0){
+			continue;
+		}
+		cout<<"vehicle "<<v_id << " s, new_s, v, d "<< s << " , "<<new_s <<" , "<< s_dot <<"," << d << endl;
+		//assume the other proceed with constant velocity along the road
+		std::vector<double> start_state = {new_s, s_dot, 0, d, 0, 0};
+		predictions[v_id] = Vehicle(start_state);
+	}
 	return predictions;
 }
 std::vector<std::vector<double>> TrjMgr::get_start_state(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
@@ -305,7 +313,11 @@ std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<doub
 	vector<double> s_coeff = m_last_trjobj.s_coeff;
 	vector<double> s_dot_coeff = differentiate(s_coeff);
 	vector<double> s_dot_dot_coeff = differentiate(s_dot_coeff);
-	start_s = {to_equation(s_coeff, cur_t),to_equation(s_dot_coeff, cur_t),to_equation(s_dot_dot_coeff, cur_t)};
+	double cur_s = to_equation(s_coeff, cur_t);
+	if(cur_s > MAX_S){
+		cur_s = cur_s - MAX_S;
+	}
+	start_s = {cur_s,to_equation(s_dot_coeff, cur_t),to_equation(s_dot_dot_coeff, cur_t)};
 
 	vector<double> d_coeff = m_last_trjobj.d_coeff;
 	vector<double> d_dot_coeff = differentiate(d_coeff);
@@ -313,8 +325,6 @@ std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<doub
 	start_d = {to_equation(d_coeff, cur_t),to_equation(d_dot_coeff, cur_t),to_equation(d_dot_dot_coeff, cur_t)};
 
 	cout<<"estimated_s, estimated_d"<<start_s<<","<<start_d<<endl;
-
-
 
 	return {start_s,start_d};
 
@@ -332,6 +342,9 @@ void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
 	while(cur_t <= t){
 		double cur_s = to_equation(s_coeff, cur_t);
 		double cur_d = to_equation(d_coeff, cur_t);
+		if(cur_s > MAX_S){
+			cur_s = cur_s - MAX_S;
+		}
 		//push new waypoints on top of previous old waypoints
 		m_last_waypoints_s.push_back(cur_s);
 		m_last_waypoints_d.push_back(cur_d);
@@ -341,11 +354,11 @@ void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
 	for(int i=0; i< m_last_waypoints_s.size(); i++){
 		double cur_s = m_last_waypoints_s[i];
 		double cur_d = m_last_waypoints_d[i];
-//		vector<double> xy = getXY_Q(cur_s, cur_d);
+		//		vector<double> xy = getXY_Q(cur_s, cur_d);
 		vector<double> xy = convert_sd_to_xy(cur_s, cur_d);
 		m_next_x_vals.push_back(xy[0]);
 		m_next_y_vals.push_back(xy[1]);
-		cout<<"cur_s, cur_d "<<cur_s<<","<<cur_d<<endl;
+		//		cout<<"cur_s, cur_d "<<cur_s<<","<<cur_d<<endl;
 	}
 	m_last_waypoints_num = m_next_x_vals.size();
 	m_last_trjobj = trjobj;

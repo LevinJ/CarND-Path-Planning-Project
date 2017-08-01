@@ -128,11 +128,11 @@ int main() {
 					vector<double> next_x_vals;
 					vector<double> next_y_vals;
 
-					static bool firsttime = true;
-					if(!firsttime){
-						return;
-					}
-					firsttime = false;
+//					static bool firsttime = true;
+//					if(!firsttime){
+//						return;
+//					}
+//					firsttime = false;
 
 					const std::vector<double> &car_state = {car_x, car_y,car_s,car_d,car_yaw,car_speed};
 					trjmgr.generate_next_waypoints(car_state,previous_path_x,previous_path_y,end_path_s,end_path_d,sensor_fusion);

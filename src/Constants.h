@@ -23,15 +23,17 @@ const float EXPECTED_ACC_IN_ONE_SEC = 1;// # m/s
 
 const float SPEED_LIMIT = 20;
 const float VEHICLE_RADIUS = 1.5;// # model vehicle as circle to simplify collision detection
-const float SAFE_DISTANCE_BUFFER = 2*VEHICLE_RADIUS;
+const float SAFE_DISTANCE_BUFFER = 3*VEHICLE_RADIUS;
 
 const float MAX_D = 12;//maximum lateral distance
 const float MIN_D = 0;
 
 const float LANE_WIDTH = 4;
 
-const int REUSE_PREV_POINTS_NUM = 300;
+const int REUSE_PREV_POINTS_NUM = 25;
 const double FRAME_UPDATE_TIME = 0.02;
+
+const double MAX_S = 6945.554;
 
 
 
