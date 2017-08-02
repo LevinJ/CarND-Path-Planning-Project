@@ -55,6 +55,7 @@ public:
 	double unperturbed_t;
 	std::vector<double> s_goal;
 	std::vector<double> d_goal;
+	bool baccident;
 };
 
 class TrjGoal{

@@ -38,16 +38,14 @@ Trajectory::Trajectory() {
 	m_cost_map["time_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
 	m_cost_map["s_diff_cost"] = CostFuncWeight(&s_diff_cost, 1);
 	m_cost_map["d_diff_cost"] = CostFuncWeight(&d_diff_cost, 1);
-	m_cost_map["max_jerk_cost"] = CostFuncWeight(&max_jerk_cost, 1);
+	m_cost_map["max_jerk_cost"] = CostFuncWeight(&max_jerk_cost, 10);
 	m_cost_map["total_jerk_cost"] = CostFuncWeight(&total_jerk_cost, 1);
 	m_cost_map["collision_cost"] = CostFuncWeight(&collision_cost, 10);
 	m_cost_map["buffer_cost"] = CostFuncWeight(&buffer_cost, 1);
-	m_cost_map["max_accel_cost"] = CostFuncWeight(&max_accel_cost, 1);
+	m_cost_map["max_accel_cost"] = CostFuncWeight(&max_accel_cost, 10);
 	m_cost_map["total_accel_cost"] = CostFuncWeight(&total_accel_cost, 1);
-	m_cost_map["exceeds_speed_limit_cost"] = CostFuncWeight(&exceeds_speed_limit_cost, 1);
-	m_cost_map["stays_on_road_cost"] = CostFuncWeight(&stays_on_road_cost, 1);
-
-
+	m_cost_map["exceeds_speed_limit_cost"] = CostFuncWeight(&exceeds_speed_limit_cost, 10);
+	m_cost_map["stays_on_road_cost"] = CostFuncWeight(&stays_on_road_cost, 10);
 }
 
 Trajectory::~Trajectory() {
@@ -165,6 +163,11 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 			best =trj;
 			min_cost = cost;
 		}
+	}
+	if(min_cost >=10){
+		best.baccident = true;
+	}else{
+		best.baccident = false;
 	}
 	calculate_cost(best, predictions, true);
 	return best;

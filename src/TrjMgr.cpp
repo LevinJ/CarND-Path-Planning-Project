@@ -104,7 +104,7 @@ int NextWaypoint(double x, double y, double theta, vector<double> maps_x, vector
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
 vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x, vector<double> maps_y)
-												{
+														{
 	int next_wp = NextWaypoint(x,y, theta, maps_x,maps_y);
 
 	int prev_wp;
@@ -149,11 +149,11 @@ vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x
 
 	return {frenet_s,frenet_d};
 
-												}
+														}
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
 vector<double> getXY(double s, double d, const vector<double> &maps_s, const vector<double> &maps_x, const vector<double> &maps_y)
-												{
+														{
 	int prev_wp = -1;
 
 	while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) ))
@@ -177,7 +177,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 	return {x,y};
 
-												}
+														}
 
 TrjMgr::TrjMgr(const vector<double> &maps_s, const vector<double> &maps_x, vector<double> &maps_y,
 		const vector<double> &maps_dx, const vector<double> &maps_dy) {
@@ -216,12 +216,14 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 
 	string suggested_state = behavior.update_state(start_s, start_d, predictions);
 	TrjObject trjobj;
-	if(suggested_state == "Kl"){
-		trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
-	}else if (suggested_state == "LCL"){
+	if (suggested_state == "LCL"){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, true);
-	}else{
+	}
+	if (suggested_state == "LCR"){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, false);
+	}
+	if(suggested_state == "Kl" || trjobj.baccident){
+		trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
 	}
 	convert_next_waypoints(trjobj);
 
