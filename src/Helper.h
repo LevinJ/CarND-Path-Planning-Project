@@ -86,6 +86,10 @@ std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
 }
 
 
+int	get_lane_num(double d);
+double get_lane_dist(int lane_id);
+double logistic(double x);
+
 class Helper {
 public:
 	Helper();

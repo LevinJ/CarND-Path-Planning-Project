@@ -24,17 +24,7 @@ double time_diff_cost(const TrjObject &traj, const std::map<int, Vehicle> &predi
 
 	return logistic(float(abs(t-unperturbed_t)) / unperturbed_t);
 }
-/*
-A function that returns a value between 0 and 1 for x in the
-range [0, infinity] and -1 to 1 for x in the range [-infinity, infinity].
 
-Useful for cost functions.
- */
-double logistic(double x){
-
-	return 2.0 / (1 + exp(-x)) - 1.0;
-
-}
 
 /*
    Penalizes trajectories whose s coordinate (and derivatives)

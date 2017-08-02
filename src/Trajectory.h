@@ -36,7 +36,7 @@ public:
 			double T, std::map<int, Vehicle> &predictions);
 	std::vector<double> JMT(std::vector< double> start, std::vector <double> end, double T);
 	TrjObject LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
-			double T, std::map<int, Vehicle> &predictions, bool prepare=true, bool left= true);
+			double T, std::map<int, Vehicle> &predictions, bool left= true);
 	double calculate_cost(const TrjObject &trajectory,  const std::map<int, Vehicle> &predictions,
 				bool verbose=false);
 
@@ -54,9 +54,6 @@ private:
 			std::vector<double> &goal_s, std::vector<double> &goal_d,  std::map<int, Vehicle> &predictions);
 	TrjObject follow_vehicle(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
 			int target_vehicle, const std::vector<double> &delta,  std::map<int, Vehicle> &predictions);
-	int	get_lane_num(double d);
-	double get_lane_dist(int lane_id);
-
 };
 
 #endif /* TRAJECTORY_H_ */

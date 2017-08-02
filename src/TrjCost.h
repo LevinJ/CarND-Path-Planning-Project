@@ -30,7 +30,7 @@
 	double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
 	std::vector<double> differentiate(const std::vector<double> &coefficients);
 	double to_equation(const std::vector<double> &coefficients, double t);
-	double logistic(double x);
+
 
 
 #endif /* EXERCISE_TRAJECTORYCPLUSPLUS_SRC_TRJCOST_H_ */

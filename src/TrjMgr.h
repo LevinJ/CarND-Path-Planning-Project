@@ -10,6 +10,7 @@
 
 #include <vector>
 #include "Trajectory.h"
+#include "Behavior.h"
 
 class TrjMgr {
 public:
@@ -45,6 +46,7 @@ private:
 	std::vector<std::vector<double>> process_prevpath(const std::vector<double> &previous_path_x,
 			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
 	vector<double> getFrenet_Q(double x, double y, double theta);
+	Behavior behavior;
 
 };
 

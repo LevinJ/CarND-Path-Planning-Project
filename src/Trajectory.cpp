@@ -160,7 +160,7 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 	TrjObject best;
 	for(auto &trj: trajectories ){
 		double cost = calculate_cost(trj, predictions);
-//		cout<<"s_goal "<<trj.s_goal<<"d_goal "<<trj.d_goal << "t "<<trj.t <<"cost "<<cost<<endl;
+		//		cout<<"s_goal "<<trj.s_goal<<"d_goal "<<trj.d_goal << "t "<<trj.t <<"cost "<<cost<<endl;
 		if(cost < min_cost){
 			best =trj;
 			min_cost = cost;
@@ -205,7 +205,7 @@ std::vector<TrjGoal> Trajectory::perturb_goals(const std::vector<double> &start_
 		}
 
 		all_goals.push_back(TrjGoal(goal_s,goal_d,t,goal_s,goal_d));
-//		cout<<"t "<< t <<", goal "<<goal_s<<","<< goal_d<<", unperturbed "<<goal_s<<","<< goal_d<<endl;
+		//		cout<<"t "<< t <<", goal "<<goal_s<<","<< goal_d<<", unperturbed "<<goal_s<<","<< goal_d<<endl;
 		for(int i=0; i<N_SAMPLES;i++){
 			std::vector<std::vector<double>> perturbed = perturb_goal(goal_s, goal_d);
 
@@ -262,12 +262,7 @@ TrjObject Trajectory::follow_vehicle(const std::vector<double> &start_s, const s
 			goal_d, target_vehicle, delta,predictions);
 	return PTG(start_s, start_d,all_goals, T,predictions);
 }
-int	Trajectory::get_lane_num(double d){
-	return int(d / LANE_WIDTH);
-}
-double Trajectory::get_lane_dist(int lane_id){
-	return lane_id*LANE_WIDTH + LANE_WIDTH/2;
-}
+
 TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		double T, std::map<int, Vehicle> &predictions){
 	bool has_target = false;
@@ -326,27 +321,18 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 }
 
 TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
-		double T, std::map<int, Vehicle> &predictions, bool prepare, bool left){
+		double T, std::map<int, Vehicle> &predictions, bool left){
 	bool has_target = false;
 	double s = start_s[0];
 	double d = start_d[0];
 	int target_lane = -1;
-	std::vector<double> delta = {};
+
 	if(left)
 		target_lane = get_lane_num(d) + 1;
 	else
 		target_lane = get_lane_num(d) - 1;
-	if(prepare){
-		if(left)
-			delta = {0, 0,0,-LANE_WIDTH,0,0};
-		else
-			delta = {0, 0,0,LANE_WIDTH,0,0};
 
-	}
 
-	else{
-		delta = {0, 0,0,0,0,0};
-	}
 	int closetest_id = -1;
 	double distance = INFINITY;
 	for(auto &kv: predictions){
@@ -374,21 +360,16 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 		if(distance < max_distance){
 			has_target = true;
 		}
-
 	}
 
 	if(has_target){
 		int target_vehicle = closetest_id;
-		if(not prepare){
-			delta[0] = delta_s;
-		}
+		std::vector<double> delta = {};
+		delta = {0, 0,0,0,0,0};
+		delta[0] = delta_s;
+		//make sure it stays on the center of the lane
+		delta[3] = get_lane_dist(get_lane_num(start_d[0])) - predictions[target_vehicle].start_state[3];
 		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
-
-	}
-
-
-	if(prepare){
-		return keep_lane(start_s, start_d, T, predictions);
 	}
 
 	//lane change
