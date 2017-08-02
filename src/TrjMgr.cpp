@@ -214,7 +214,7 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	std::map<int, Vehicle> predictions = get_predictons(sensor_fusion, start_s[0]);
 	double T = 5;
 
-	string suggested_state = behavior.update_state(start_s, start_d, predictions);
+	string suggested_state = m_behavior.update_state(start_s, start_d, predictions);
 	TrjObject trjobj;
 	if (suggested_state == "LCL"){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, true);

@@ -44,7 +44,7 @@ std::string Behavior::update_state(const std::vector<double> &start_s, const std
 		double cur_cost = calculate_cost(vehicle, state, data);
 		if(cur_cost < min_cost){
 			min_cost = cur_cost;
-			min_cost_state = cur_cost;
+			min_cost_state = state;
 		}
 	}
 	cout<<"min_cost_state="<<min_cost_state<<endl;
@@ -77,6 +77,11 @@ BehvCostData Behavior::compute_behv_cost_data(const Vehicle & vehicle, std::map<
 			continue;
 		}
 		int lane_id = get_lane_num(v.start_state[3]);
+		if(lane_id <0 || lane_id >2){
+			//ignore such vehicles
+			cout<<"error: unexpected lane in sensor fusion data" <<endl;
+			continue;
+		}
 		if(leading_vehicles.find(lane_id) == leading_vehicles.end()){
 			//no vehilce in this lane are in the map yet
 			leading_vehicles[lane_id] = v;

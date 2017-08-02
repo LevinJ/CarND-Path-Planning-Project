@@ -203,7 +203,11 @@ std::vector<TrjGoal> Trajectory::perturb_goals(const std::vector<double> &start_
 		if(folllow_vehicle){
 			const Vehicle &target = predictions[target_vehicle];
 			vector<double> target_state = target.state_in(t) + delta;
-			goal_s = {target_state[0],target_state[1],target_state[2]};
+			goal_s = {target_state[0],target_state[1],0};
+			if(goal_s[1] > SPEED_LIMIT){
+				//make sure we do not exceed speed limit when following vehicles
+				goal_s[1] = SPEED_LIMIT;
+			}
 			goal_d = {target_state[3],target_state[4],target_state[5]};
 		}
 
@@ -371,14 +375,21 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 		delta = {0, 0,0,0,0,0};
 		delta[0] = delta_s;
 		//make sure it stays on the center of the lane
-		delta[3] = get_lane_dist(get_lane_num(start_d[0])) - predictions[target_vehicle].start_state[3];
+		double target_lane_dist = predictions[target_vehicle].start_state[3];
+		delta[3] = get_lane_dist(get_lane_num(target_lane_dist)) - target_lane_dist;
 		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
 	}
 
 	//lane change
 	vector<double> goal_s = {s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0};
 	vector<double> goal_d = {target_lane*LANE_WIDTH + LANE_WIDTH/2,0,0};
-	return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+	TrjObject trjobj = follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+	string res = "success";
+	if(trjobj.baccident){
+		res = "failure";
+	}
+	cout<<"LC, target lane="<< target_lane<<" result="<<res<<endl;
+	return trjobj;
 
 }
 
