@@ -32,8 +32,8 @@ private:
 
 	vector<double> convert_sd_to_xy(const double s, const double d);
 
-	vector<double> m_last_waypoints_s;
-	vector<double> m_last_waypoints_d;
+	vector<vector<double>> m_last_waypoints_s;
+	vector<vector<double>> m_last_waypoints_d;
 	std::vector<std::vector<double>> get_start_state(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
 			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
 	std::map<int, Vehicle> get_predictons(const std::vector<std::vector<double>> &sensor_fusion, double start_s);
@@ -42,7 +42,7 @@ private:
 
 	vector<double> getXY_Q(double s, double d);
 	int m_last_waypoints_num;
-	TrjObject m_last_trjobj;
+//	TrjObject m_last_trjobj;
 	std::vector<std::vector<double>> process_prevpath(const std::vector<double> &previous_path_x,
 			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
 	vector<double> getFrenet_Q(double x, double y, double theta);

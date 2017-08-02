@@ -272,7 +272,6 @@ TrjObject Trajectory::follow_vehicle(const std::vector<double> &start_s, const s
 
 TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		double T, std::map<int, Vehicle> &predictions){
-	bool has_target = false;
 
 	double s = start_s[0];
 	double d = start_d[0];
@@ -290,41 +289,34 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 		}
 	}
 	if(leading_id !=-1){
-		double max_distance = (SPEED_LIMIT - predictions[leading_id].start_state[1])* T;
-		if (distance < max_distance + SAFE_DISTANCE_BUFFER){
-			has_target = true;
+		//if we have leading vehicle, check whether it's within safe distance
+		double cur_distance = predictions[leading_id].start_state[0] - start_s[0];
+		if (cur_distance < SAFE_DISTANCE_BUFFER){
+			//let's increase the gap in a stable/gradual fashion
+			double deta_distance = cur_distance + 10;
+			if(deta_distance >SAFE_DISTANCE_BUFFER){
+				deta_distance = SAFE_DISTANCE_BUFFER;
+			}
+			//make sure we do not change lanes
+			double delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[leading_id].start_state[3];
+			vector<double> delta = {-deta_distance, 0,0,delta_d,0,0};
+			cout<<"trj: keep lane, has target "<<leading_id<<" delta, "<<delta<<endl;
+
+			return follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
 		}
 	}
 
-	//follow the vehicle or follow the goal
-	if(has_target){
-
-		int target_vehicle = leading_id;
-		//make we do not change lanes
-		double delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[target_vehicle].start_state[3];
-		double deta_s = predictions[target_vehicle].start_state[0] - start_s[0];
-		if(deta_s < SAFE_DISTANCE_BUFFER){
-			//let's get away from the leading vehicle till a safe distance by and by
-			deta_s = deta_s + 5;
-		}else{
-			deta_s = SAFE_DISTANCE_BUFFER;
-		}
-		vector<double> delta = {-deta_s, 0,0,delta_d,0,0};
-		cout<<"keep lane, has target "<<leading_id<<" delta, "<<delta<<endl;
-		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
-	}else{
-		double target_speed = (SPEED_LIMIT + start_s[1])/2;
-		if (target_speed > SPEED_LIMIT){
-			target_speed = SPEED_LIMIT;
-		}
-		cout<<"keep lane, no target, "<<target_speed<<endl;
-		vector<double> goal_s = {s+ target_speed*T, SPEED_LIMIT, 0};
-
-
-		vector<double> goal_d = {get_lane_dist(get_lane_num(start_d[0])),0,0};
-		return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+	//follow a reasonably set goal
+	double avg_speed = (SPEED_LIMIT + start_s[1])/2;
+	if (avg_speed > SPEED_LIMIT){
+		avg_speed = SPEED_LIMIT;
 	}
+	cout<<"trj: keep lane, no target, "<<avg_speed<<endl;
+	vector<double> goal_s = {s+ avg_speed*T, SPEED_LIMIT, 0};
 
+
+	vector<double> goal_d = {get_lane_dist(get_lane_num(start_d[0])),0,0};
+	return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
 }
 
 TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
@@ -377,7 +369,13 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 		//make sure it stays on the center of the lane
 		double target_lane_dist = predictions[target_vehicle].start_state[3];
 		delta[3] = get_lane_dist(get_lane_num(target_lane_dist)) - target_lane_dist;
-		return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
+		TrjObject trjobj = follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
+		string res = "success";
+		if(trjobj.baccident){
+			res = "failure";
+		}
+		cout<<"trj: LC, target lane="<< target_lane<<" result="<<res<<endl;
+		return trjobj;
 	}
 
 	//lane change
@@ -388,7 +386,7 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 	if(trjobj.baccident){
 		res = "failure";
 	}
-	cout<<"LC, target lane="<< target_lane<<" result="<<res<<endl;
+	cout<<"trj: LC, target lane="<< target_lane<<" result="<<res<<endl;
 	return trjobj;
 
 }

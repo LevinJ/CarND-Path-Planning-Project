@@ -8,7 +8,7 @@
 #ifndef EXERCISE_TRAJECTORYCPLUSPLUS_SRC_CONSTANTS_H_
 #define EXERCISE_TRAJECTORYCPLUSPLUS_SRC_CONSTANTS_H_
 
-const int N_SAMPLES = 10;
+const int N_SAMPLES = 0;
 const float SIGMA_S[] = {10.0, 4.0, 2.0}; // s, s_dot, s_double_dot
 const float SIGMA_D[] = {1.0, 1.0, 1.0};
 const float SIGMA_T = 2.0;
@@ -33,6 +33,7 @@ const float LANE_WIDTH = 4;
 
 const int REUSE_PREV_POINTS_NUM = 25;
 const double FRAME_UPDATE_TIME = 0.02;
+const int All_POINTS_NUM = 150;
 
 const double MAX_S = 6945.554;
 

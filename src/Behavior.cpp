@@ -24,6 +24,7 @@ Behavior::~Behavior() {
 
 std::string Behavior::update_state(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		std::map<int, Vehicle> &predictions){
+	return "KL";
 	vector<string> states = {"KL", "LCL", "LCR"};
 	Vehicle  vehicle({start_s[0], start_s[1], start_s[2], start_d[0], start_d[1], start_d[2]});
 	int cur_lane_id = get_lane_num(vehicle.start_state[3]);

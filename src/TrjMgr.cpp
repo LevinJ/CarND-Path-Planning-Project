@@ -104,7 +104,7 @@ int NextWaypoint(double x, double y, double theta, vector<double> maps_x, vector
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
 vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x, vector<double> maps_y)
-														{
+																{
 	int next_wp = NextWaypoint(x,y, theta, maps_x,maps_y);
 
 	int prev_wp;
@@ -149,11 +149,11 @@ vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x
 
 	return {frenet_s,frenet_d};
 
-														}
+																}
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
 vector<double> getXY(double s, double d, const vector<double> &maps_s, const vector<double> &maps_x, const vector<double> &maps_y)
-														{
+																{
 	int prev_wp = -1;
 
 	while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) ))
@@ -177,7 +177,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 	return {x,y};
 
-														}
+																}
 
 TrjMgr::TrjMgr(const vector<double> &maps_s, const vector<double> &maps_x, vector<double> &maps_y,
 		const vector<double> &maps_dx, const vector<double> &maps_dy) {
@@ -215,6 +215,7 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	double T = 5;
 
 	string suggested_state = m_behavior.update_state(start_s, start_d, predictions);
+
 	TrjObject trjobj;
 	if (suggested_state == "LCL"){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, true);
@@ -222,7 +223,7 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	if (suggested_state == "LCR"){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, false);
 	}
-	if(suggested_state == "Kl" || trjobj.baccident){
+	if(suggested_state == "KL" || trjobj.baccident){
 		trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
 	}
 	convert_next_waypoints(trjobj);
@@ -280,7 +281,7 @@ std::vector<std::vector<double>> TrjMgr::get_start_state(const std::vector<doubl
 	//get starting point from car param
 	vector<double> start_s = {car_s,car_speed,0};
 	vector<double> start_d = {car_d,0,0};
-	cout<<"car_s, car_d"<<start_s<<","<<start_d<<endl;
+	cout<<"car_s="<<start_s<<", car_d="<<start_d<<endl;
 
 	if(previous_path_x.size() != 0){
 		//get starting point from pre path
@@ -296,29 +297,23 @@ std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<doub
 		const std::vector<double> &previous_path_y, double end_path_s,double end_path_d){
 	vector<double> start_s = {};
 	vector<double> start_d = {};
-	for(int i=0; i< previous_path_x.size(); i++){
-		vector<double> sd = getFrenet_Q(previous_path_x[i], previous_path_y[i], 0);
-		//		cout<<"prev s,d "<<sd[0]<<", "<<sd[1]<<endl;
-	}
 
 	//get starting point based on last stored path
 	int consume_num =  m_last_waypoints_num - previous_path_x.size();
-	cout<<"m_last_waypoints_num "<<m_last_waypoints_num<< "previous_path_x.size()"<<previous_path_x.size()<<endl;
-	cout<<"consumed "<< consume_num <<endl;
-	double cur_t = consume_num * FRAME_UPDATE_TIME;
-	static bool firsttime = true;
-	if(firsttime){
-		cur_t = (consume_num + REUSE_PREV_POINTS_NUM)  * FRAME_UPDATE_TIME;
-		firsttime = false;
 
-	}else{
-		cur_t = consume_num  * FRAME_UPDATE_TIME;
-	}
 
-	cout<<"cur_t: "<<cur_t<<endl;
-	//clean up locally stored waypoints
-	vector<double> temp_s;
-	vector<double> temp_d;
+	cout<<"estimated_s="<<m_last_waypoints_s[consume_num]<<", estimated_d="<<m_last_waypoints_d[consume_num]<<endl;
+
+
+	start_s = m_last_waypoints_s[consume_num + REUSE_PREV_POINTS_NUM];
+	start_d = m_last_waypoints_d[consume_num + REUSE_PREV_POINTS_NUM];;
+	cout<<"start_s="<<start_s<<", start_d="<<start_d<<endl;
+
+	cout<<"consumed="<< consume_num << "m_last_waypoints_num="<<m_last_waypoints_num<< ", previous_path_x.size()="<<previous_path_x.size()<<endl;
+
+
+	vector<vector<double>> temp_s;
+	vector<vector<double>> temp_d;
 	for(int i=0; i<m_last_waypoints_num; i++){
 		if(i<consume_num){
 			//already consumed by the simulator, skip them
@@ -331,25 +326,10 @@ std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<doub
 		temp_s.push_back(m_last_waypoints_s[i]);
 		temp_d.push_back(m_last_waypoints_d[i]);
 	}
+
+
 	m_last_waypoints_s = temp_s;
 	m_last_waypoints_d = temp_d;
-
-
-	vector<double> s_coeff = m_last_trjobj.s_coeff;
-	vector<double> s_dot_coeff = differentiate(s_coeff);
-	vector<double> s_dot_dot_coeff = differentiate(s_dot_coeff);
-	double cur_s = to_equation(s_coeff, cur_t);
-	if(cur_s > MAX_S){
-		cur_s = cur_s - MAX_S;
-	}
-	start_s = {cur_s,to_equation(s_dot_coeff, cur_t),to_equation(s_dot_dot_coeff, cur_t)};
-
-	vector<double> d_coeff = m_last_trjobj.d_coeff;
-	vector<double> d_dot_coeff = differentiate(d_coeff);
-	vector<double> d_dot_dot_coeff = differentiate(d_dot_coeff);
-	start_d = {to_equation(d_coeff, cur_t),to_equation(d_dot_coeff, cur_t),to_equation(d_dot_dot_coeff, cur_t)};
-
-	cout<<"estimated_s, estimated_d"<<start_s<<","<<start_d<<endl;
 
 	return {start_s,start_d};
 
@@ -361,24 +341,37 @@ void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
 	m_next_y_vals = {};
 	double t = trjobj.t;
 	std::vector<double> s_coeff = trjobj.s_coeff;
+	vector<double> s_dot_coeff = differentiate(s_coeff);
+	vector<double> s_dot_dot_coeff = differentiate(s_dot_coeff);
+
 	std::vector<double> d_coeff = trjobj.d_coeff;
-	double dt = 0.02;
+	vector<double> d_dot_coeff = differentiate(d_coeff);
+	vector<double> d_dot_dot_coeff = differentiate(d_dot_coeff);
+
+	double dt = FRAME_UPDATE_TIME;
 	double cur_t = 0;
-	while(cur_t <= t){
+
+	int count = All_POINTS_NUM - m_last_waypoints_s.size();
+	for(int i=0; i< count; i++){
+		if(cur_t > t){
+			cout<<"unexpected, All_POINTS_NUM being set is too big "<<All_POINTS_NUM<<endl;
+			break;
+		}
 		double cur_s = to_equation(s_coeff, cur_t);
-		double cur_d = to_equation(d_coeff, cur_t);
 		if(cur_s > MAX_S){
 			cur_s = cur_s - MAX_S;
 		}
-		//push new waypoints on top of previous old waypoints
-		m_last_waypoints_s.push_back(cur_s);
-		m_last_waypoints_d.push_back(cur_d);
+		vector<double> s = {cur_s,to_equation(s_dot_coeff, cur_t),to_equation(s_dot_dot_coeff, cur_t)};
+		m_last_waypoints_s.push_back(s);
+
+		vector<double> d = {to_equation(d_coeff, cur_t),to_equation(d_dot_coeff, cur_t),to_equation(d_dot_dot_coeff, cur_t)};
+		m_last_waypoints_d.push_back(d);
 
 		cur_t += dt;
 	}
 	for(int i=0; i< m_last_waypoints_s.size(); i++){
-		double cur_s = m_last_waypoints_s[i];
-		double cur_d = m_last_waypoints_d[i];
+		double cur_s = m_last_waypoints_s[i][0];
+		double cur_d = m_last_waypoints_d[i][0];
 		//		vector<double> xy = getXY_Q(cur_s, cur_d);
 		vector<double> xy = convert_sd_to_xy(cur_s, cur_d);
 		m_next_x_vals.push_back(xy[0]);
@@ -386,9 +379,6 @@ void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
 		//		cout<<"cur_s, cur_d "<<cur_s<<","<<cur_d<<endl;
 	}
 	m_last_waypoints_num = m_next_x_vals.size();
-	m_last_trjobj = trjobj;
-	//	cout<<"m_next_x_vals size, "<<m_next_x_vals.size()<<endl;
-
 }
 
 vector<double> TrjMgr::getXY_Q(double s, double d){
