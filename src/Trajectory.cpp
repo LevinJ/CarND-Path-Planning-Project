@@ -291,7 +291,7 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 	if(leading_id !=-1){
 		//if we have leading vehicle, check whether it's within safe distance
 		double cur_distance = predictions[leading_id].start_state[0] - start_s[0];
-		if (cur_distance < SAFE_DISTANCE_BUFFER){
+		if (cur_distance < SAFE_DISTANCE_BUFFER + 5){
 			//let's increase the gap in a stable/gradual fashion
 			double deta_distance = cur_distance + 10;
 			if(deta_distance >SAFE_DISTANCE_BUFFER){

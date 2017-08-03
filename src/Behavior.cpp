@@ -25,18 +25,29 @@ Behavior::~Behavior() {
 
 BehvStates Behavior::update_state(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		std::map<int, Vehicle> &predictions){
-	return BehvStates::KL;
-	vector<BehvStates> states = {BehvStates::KL, BehvStates::LCL, BehvStates::LCR};
+//	return BehvStates::KL;
+	static bool firsttime = true;
+	if(firsttime){
+		//make sure the car go in straight for line the first few seconds
+		firsttime = false;
+		m_clock.reset();
+		m_last_state = BehvStates::KL;
+		return BehvStates::KL;
+	}
+	vector<BehvStates> states = {};
 	Vehicle  vehicle({start_s[0], start_s[1], start_s[2], start_d[0], start_d[1], start_d[2]});
 	int cur_lane_id = get_lane_num(vehicle.start_state[3]);
 	if(cur_lane_id == 0){
 		//remove LCR
-		states.erase(states.begin() + 2);
-	}
-
-	if(cur_lane_id == 2){
+		states = {BehvStates::KL, BehvStates::LCL};
+	} else if(cur_lane_id == 2){
 		//remove LCL
-		states.erase(states.begin() + 1);
+		states = {BehvStates::KL,  BehvStates::LCR};
+	}else if (cur_lane_id == 1){
+		states = {BehvStates::KL, BehvStates::LCL, BehvStates::LCR};
+	}else{
+		cout<<"Error: unexpected lane num "<< cur_lane_id <<endl;
+		return BehvStates::KL;
 	}
 	BehvCostData data = compute_behv_cost_data(vehicle, predictions);
 	double min_cost = INFINITY;
@@ -86,7 +97,7 @@ BehvCostData Behavior::compute_behv_cost_data(const Vehicle & vehicle, std::map<
 		int lane_id = get_lane_num(v.start_state[3]);
 		if(lane_id <0 || lane_id >2){
 			//ignore such vehicles
-			cout<<"error: unexpected lane in sensor fusion data" <<endl;
+			cout<<"Error: unexpected lane in sensor fusion data" <<endl;
 			continue;
 		}
 		if(leading_vehicles.find(lane_id) == leading_vehicles.end()){
