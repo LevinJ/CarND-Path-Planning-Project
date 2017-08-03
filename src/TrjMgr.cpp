@@ -214,16 +214,16 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	std::map<int, Vehicle> predictions = get_predictons(sensor_fusion, start_s[0]);
 	double T = 5;
 
-	string suggested_state = m_behavior.update_state(start_s, start_d, predictions);
+	BehvStates suggested_state = m_behavior.update_state(start_s, start_d, predictions);
 
 	TrjObject trjobj;
-	if (suggested_state == "LCL"){
+	if (suggested_state == BehvStates::LCL){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, true);
 	}
-	if (suggested_state == "LCR"){
+	if (suggested_state == BehvStates::LCR){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, false);
 	}
-	if(suggested_state == "KL" || trjobj.baccident){
+	if(suggested_state == BehvStates::KL || trjobj.baccident){
 		trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
 	}
 	convert_next_waypoints(trjobj);

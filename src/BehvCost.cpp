@@ -10,19 +10,19 @@
 #include "Constants.h"
 #include <cmath>
 
-static int get_target_laneid(const Vehicle & vehicle, std::string state){
+static int get_target_laneid(const Vehicle & vehicle, BehvStates state){
 	int cur_lane_id = get_lane_num(vehicle.start_state[3]);
 	int target_lane_id = cur_lane_id;
-	if(state == "LCL"){
+	if(state == BehvStates::LCL){
 		target_lane_id = cur_lane_id + 1;
-	}else if (state == "LCR"){
+	}else if (state == BehvStates::LCR){
 		target_lane_id = cur_lane_id -1;
 	}
 	return target_lane_id;
 
 }
 
-double lane_speed_cost(const Vehicle & vehicle, std::string state, BehvCostData &data){
+double lane_speed_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
 
 	int target_lane_id = get_target_laneid(vehicle, state);
 	double target_lane_speed = target_lane_speed = SPEED_LIMIT + 10;
@@ -34,8 +34,8 @@ double lane_speed_cost(const Vehicle & vehicle, std::string state, BehvCostData 
 	return logistic(SPEED_LIMIT/target_lane_speed);
 }
 
-double lane_collision_cost(const Vehicle & vehicle, std::string state, BehvCostData &data){
-	if(state == "KL"){
+double lane_collision_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
+	if(state == BehvStates::KL){
 		return 0;
 	}
 	int target_lane_id = get_target_laneid(vehicle, state);
@@ -66,11 +66,11 @@ double lane_collision_cost(const Vehicle & vehicle, std::string state, BehvCostD
 	}
 	return 1;
 }
-double lane_change_cost(const Vehicle & vehicle, std::string state, BehvCostData &data){
-	if(state == "KL"){
+double lane_change_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
+	if(state == BehvStates::KL){
 		return 0;
 	}
-	if (data.last_state == "LCL" || data.last_state == "LCR"){
+	if (data.last_state == BehvStates::LCL || data.last_state == BehvStates::LCR){
 		return 0;
 	}
 	if(data.last_LC_elapsed_duration > LAST_LC_ELAPSED_COST_THRES){

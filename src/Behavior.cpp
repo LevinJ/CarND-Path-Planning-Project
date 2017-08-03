@@ -12,22 +12,21 @@
 using namespace std;
 
 Behavior::Behavior() {
-
 	m_cost_map["lane_speed_cost"] = BehvCostFuncWeight(&lane_speed_cost, 1);
 	m_cost_map["lane_collision_cost"] = BehvCostFuncWeight(&lane_collision_cost, 10);
 	m_cost_map["lane_change_cost"] = BehvCostFuncWeight(&lane_change_cost, 10);
-
+	m_last_state = BehvStates::KL;
 }
 
 Behavior::~Behavior() {
-	m_last_state = "KL";
+
 
 }
 
-std::string Behavior::update_state(const std::vector<double> &start_s, const std::vector<double> &start_d,
+BehvStates Behavior::update_state(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		std::map<int, Vehicle> &predictions){
-	return "KL";
-	vector<string> states = {"KL", "LCL", "LCR"};
+	return BehvStates::KL;
+	vector<BehvStates> states = {BehvStates::KL, BehvStates::LCL, BehvStates::LCR};
 	Vehicle  vehicle({start_s[0], start_s[1], start_s[2], start_d[0], start_d[1], start_d[2]});
 	int cur_lane_id = get_lane_num(vehicle.start_state[3]);
 	if(cur_lane_id == 0){
@@ -41,7 +40,7 @@ std::string Behavior::update_state(const std::vector<double> &start_s, const std
 	}
 	BehvCostData data = compute_behv_cost_data(vehicle, predictions);
 	double min_cost = INFINITY;
-	string min_cost_state = "KL";
+	BehvStates min_cost_state = BehvStates::KL;
 
 	for(auto &state: states){
 		double cur_cost = calculate_cost(vehicle, state, data);
@@ -51,7 +50,7 @@ std::string Behavior::update_state(const std::vector<double> &start_s, const std
 		}
 	}
 	cout<<"min_cost_state="<<min_cost_state<<endl;
-	if(min_cost_state == "LCL" || min_cost_state == "LCR"){
+	if(min_cost_state == BehvStates::LCL || min_cost_state == BehvStates::LCR){
 		m_clock.reset();
 	}
 	m_last_state = min_cost_state;
@@ -61,7 +60,7 @@ std::string Behavior::update_state(const std::vector<double> &start_s, const std
 }
 
 
-double Behavior::calculate_cost(const Vehicle & vehicle, std::string state, BehvCostData &data){
+double Behavior::calculate_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
 	double cost = 0;
 	for (auto& kv : m_cost_map){
 		auto cost_func_pair = kv.second;
@@ -100,7 +99,7 @@ BehvCostData Behavior::compute_behv_cost_data(const Vehicle & vehicle, std::map<
 		}
 	}
 
-	BehvCostData data(vehicle, predictions, leading_vehicles);
+	BehvCostData data(vehicle, predictions, leading_vehicles, m_last_state, m_clock.elapsed());
 	return data;
 }
 
