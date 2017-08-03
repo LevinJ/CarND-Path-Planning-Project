@@ -324,14 +324,58 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 	bool has_target = false;
 	double s = start_s[0];
 	double d = start_d[0];
-	int target_lane = -1;
 
-	if(left)
-		target_lane = get_lane_num(d) + 1;
-	else
-		target_lane = get_lane_num(d) - 1;
+	string lc_action_str = left ? "LCL" : "LCR";
+	double distance = INFINITY;
+	int leading_id = -1;
+	for(auto &kv: predictions){
+		Vehicle &v = kv.second;
+		if(get_lane_num(v.start_state[3]) != get_lane_num(d) || v.start_state[0] < s){
+			continue;
+		}
+		if((v.start_state[0] -s)< distance){
+			distance = v.start_state[0] -s;
+			leading_id = kv.first;
+		}
+	}
+	if(leading_id !=-1){
+		//if we have leading vehicle, check whether it's within safe distance
+		double cur_distance = predictions[leading_id].start_state[0] - start_s[0];
+		if (cur_distance < SAFE_DISTANCE_BUFFER + 5){
+			//let's increase the gap in a stable/gradual fashion
+			double deta_distance = cur_distance + 10;
+			if(deta_distance >SAFE_DISTANCE_BUFFER){
+				deta_distance = SAFE_DISTANCE_BUFFER;
+			}
+			//make sure we change to the center of the other lane
+			double target_lane_dist = predictions[leading_id].start_state[3];
+			double delta_d = get_lane_dist(get_lane_num(target_lane_dist)) - target_lane_dist;
+			vector<double> delta = {-deta_distance, 0,0,delta_d,0,0};
 
 
+			TrjObject trjobj = follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
+			string trjres = trjobj.baccident ? " failure" : " success";
+			cout<<"trj: "<<lc_action_str<<", has target "<<leading_id<<" delta, "<<delta<<trjres<<endl;
+			return trjobj;
+		}
+	}
+
+	//follow a reasonably set goal
+	double avg_speed = (SPEED_LIMIT + start_s[1])/2;
+	if (avg_speed > SPEED_LIMIT){
+		avg_speed = SPEED_LIMIT;
+	}
+	vector<double> goal_s = {s+ avg_speed*T, SPEED_LIMIT, 0};
+	int target_lane_id = left ? get_lane_num(d) + 1 :  get_lane_num(d) - 1;
+	vector<double> goal_d = {get_lane_dist(get_lane_num(target_lane_id)),0,0};
+
+	TrjObject trjobj = follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+	string trjres = trjobj.baccident ? " failure" : " success";
+	cout<<"trj: "<<lc_action_str< "no target, "<<avg_speed<<trjres<<endl;
+
+
+
+	/*
 	int closetest_id = -1;
 	double distance = INFINITY;
 	for(auto &kv: predictions){
@@ -388,6 +432,7 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 	}
 	cout<<"trj: LC, target lane="<< target_lane<<" result="<<res<<endl;
 	return trjobj;
+	 */
 
 }
 
