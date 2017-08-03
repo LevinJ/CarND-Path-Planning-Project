@@ -37,6 +37,8 @@ public:
 	std::string update_state(const std::vector<double> &start_s, const std::vector<double> &start_d,
 			std::map<int, Vehicle> &predictions);
 private:
+	ElapsedClock m_clock;//used to track when the last lane change occured
+	std::string m_last_state;
 	double calculate_cost(const Vehicle & vehicle, std::string state, BehvCostData &data);
 	std::map<std::string, BehvCostFuncWeight> m_cost_map;
 	BehvCostData compute_behv_cost_data(const Vehicle & vehicle, std::map<int, Vehicle> &predictions);

@@ -21,9 +21,12 @@ public:
 	std::map<int, Vehicle> &predictions;
 	const Vehicle &vehicle;
 	std::map<int, Vehicle> leading_vehicles;
+	std::string last_state;
+	double last_LC_elapsed_duration;
 };
 
 double lane_speed_cost(const Vehicle & vehicle, std::string state, BehvCostData &data);
 double lane_collision_cost(const Vehicle & vehicle,  std::string state, BehvCostData &data);
+double lane_change_cost(const Vehicle & vehicle, std::string state, BehvCostData &data);
 
 #endif /* SRC_BEHVCOST_H_ */

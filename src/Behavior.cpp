@@ -15,10 +15,12 @@ Behavior::Behavior() {
 
 	m_cost_map["lane_speed_cost"] = BehvCostFuncWeight(&lane_speed_cost, 1);
 	m_cost_map["lane_collision_cost"] = BehvCostFuncWeight(&lane_collision_cost, 10);
+	m_cost_map["lane_change_cost"] = BehvCostFuncWeight(&lane_change_cost, 10);
 
 }
 
 Behavior::~Behavior() {
+	m_last_state = "KL";
 
 }
 
@@ -49,10 +51,15 @@ std::string Behavior::update_state(const std::vector<double> &start_s, const std
 		}
 	}
 	cout<<"min_cost_state="<<min_cost_state<<endl;
+	if(min_cost_state == "LCL" || min_cost_state == "LCR"){
+		m_clock.reset();
+	}
+	m_last_state = min_cost_state;
 	return min_cost_state;
 
 
 }
+
 
 double Behavior::calculate_cost(const Vehicle & vehicle, std::string state, BehvCostData &data){
 	double cost = 0;

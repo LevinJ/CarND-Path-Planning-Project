@@ -66,4 +66,17 @@ double lane_collision_cost(const Vehicle & vehicle, std::string state, BehvCostD
 	}
 	return 1;
 }
+double lane_change_cost(const Vehicle & vehicle, std::string state, BehvCostData &data){
+	if(state == "KL"){
+		return 0;
+	}
+	if (data.last_state == "LCL" || data.last_state == "LCR"){
+		return 0;
+	}
+	if(data.last_LC_elapsed_duration > LAST_LC_ELAPSED_COST_THRES){
+		return 0;
+	}
+	//we don't want lanes to be frequently changed
+	return 1;
+}
 

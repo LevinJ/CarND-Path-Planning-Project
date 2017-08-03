@@ -40,6 +40,8 @@ const double MAX_S = 6945.554;
 const double FRONT_GAP_THRESH = 15.0;
 const double BACK_GAP_THRESH = 30.0;
 
+const double LAST_LC_ELAPSED_COST_THRES = 3000; //milliseconds
+
 
 
 #endif /* EXERCISE_TRAJECTORYCPLUSPLUS_SRC_CONSTANTS_H_ */

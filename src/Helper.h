@@ -11,9 +11,25 @@
 #include <vector>
 #include <map>
 #include <iterator>
+#include <chrono>
 
 
 using namespace std;
+
+class ElapsedClock
+{
+public:
+    ElapsedClock() : beg_(clock_::now()) {}
+    void reset() { beg_ = clock_::now(); }
+    double elapsed() const {
+        return std::chrono::duration_cast<chrono::milliseconds>
+            (clock_::now() - beg_).count(); }
+
+private:
+    typedef std::chrono::high_resolution_clock clock_;
+
+    std::chrono::time_point<clock_> beg_;
+};
 
 class Vehicle{
 
