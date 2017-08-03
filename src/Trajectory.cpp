@@ -321,20 +321,19 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 
 TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		double T, std::map<int, Vehicle> &predictions, bool left){
-	bool has_target = false;
-	double s = start_s[0];
-	double d = start_d[0];
 
-	string lc_action_str = left ? "LCL" : "LCR";
+	int target_lane_id = left ? get_lane_num(start_d[0]) + 1 :  get_lane_num(start_d[0]) - 1;
+	string lc_action_str = left ? " LCL " : " LCR ";
 	double distance = INFINITY;
 	int leading_id = -1;
 	for(auto &kv: predictions){
+		//find lading vehicle in the target lane
 		Vehicle &v = kv.second;
-		if(get_lane_num(v.start_state[3]) != get_lane_num(d) || v.start_state[0] < s){
+		if(get_lane_num(v.start_state[3]) != target_lane_id || v.start_state[0] < start_s[0]){
 			continue;
 		}
-		if((v.start_state[0] -s)< distance){
-			distance = v.start_state[0] -s;
+		if((v.start_state[0] -start_s[0])< distance){
+			distance = v.start_state[0] -start_s[0];
 			leading_id = kv.first;
 		}
 	}
@@ -365,13 +364,13 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 	if (avg_speed > SPEED_LIMIT){
 		avg_speed = SPEED_LIMIT;
 	}
-	vector<double> goal_s = {s+ avg_speed*T, SPEED_LIMIT, 0};
-	int target_lane_id = left ? get_lane_num(d) + 1 :  get_lane_num(d) - 1;
-	vector<double> goal_d = {get_lane_dist(get_lane_num(target_lane_id)),0,0};
+	vector<double> goal_s = {start_s[0]+ avg_speed*T, SPEED_LIMIT, 0};
+	vector<double> goal_d = {get_lane_dist(target_lane_id),0,0};
 
 	TrjObject trjobj = follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
 	string trjres = trjobj.baccident ? " failure" : " success";
-	cout<<"trj: "<<lc_action_str< "no target, "<<avg_speed<<trjres<<endl;
+	cout<<"trj: "<<lc_action_str<< "no target, "<<avg_speed<<trjres<<endl;
+	return trjobj;
 
 
 

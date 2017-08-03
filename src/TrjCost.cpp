@@ -198,7 +198,7 @@ double exceeds_speed_limit_cost(const TrjObject &traj, const std::map<int, Vehic
 	auto max_v = std::max_element(std::begin(all_vs), std::end(all_vs));
 	auto min_v = std::min_element(std::begin(all_vs), std::end(all_vs));
 
-	if(*max_v < SPEED_LIMIT && *min_v > MIN_SPEED){
+	if(*max_v < SPEED_LIMIT && *min_v >= MIN_SPEED){
 		return 0;
 	}
 	if(verbose){

@@ -260,7 +260,7 @@ std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<doub
 		//since we are planning JMT for the future
 		double new_s = s + s_dot * REUSE_PREV_POINTS_NUM * FRAME_UPDATE_TIME;
 
-		cout<<"vehicle "<<v_id << " s, new_s, v, d "<< s << " , "<<new_s <<" , "<< s_dot <<"," << d << endl;
+		cout<<"vehicle="<<v_id << " ,s="<< s <<", new_s="<<new_s<<", v=" << s_dot <<", d=" << d << endl;
 		//assume the other proceed with constant velocity along the road
 		std::vector<double> start_state = {new_s, s_dot, 0, d, 0, 0};
 		predictions[v_id] = Vehicle(start_state);
