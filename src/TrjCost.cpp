@@ -245,6 +245,9 @@ double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predi
 	}
 
 	auto max_acc = std::max_element(std::begin(all_as), std::end(all_as));
+	if(verbose){
+		cout<<"max_acc="<< *max_acc <<endl;
+	}
 	if (abs(*max_acc) > MAX_ACCEL){
 		if(verbose){
 			cout<<"Error:  max_accel_cost, max_acc "<< *max_acc <<endl;
@@ -296,6 +299,9 @@ double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predic
 	}
 
 	auto max_jerk = std::max_element(std::begin(all_jerks), std::end(all_jerks));
+	if(verbose){
+		cout<<"max_jerk="<< *max_jerk <<endl;
+	}
 	if (abs(*max_jerk) > MAX_JERK){
 		if(verbose){
 			cout<<"Error:  max_jerk_cost, max_jerk "<< *max_jerk <<endl;

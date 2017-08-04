@@ -13,8 +13,14 @@ const float SIGMA_S[] = {10.0, 4.0, 2.0}; // s, s_dot, s_double_dot
 const float SIGMA_D[] = {1.0, 1.0, 1.0};
 const float SIGMA_T = 2.0;
 
-const float MAX_JERK = 10;// # m/s/s/s
-const float MAX_ACCEL= 10;// # m/s/s
+//const float MAX_JERK = 10;// # m/s/s/s
+//const float MAX_ACCEL= 10;// # m/s/s
+
+
+//for the sake of safe planning
+const float MAX_JERK = 9;// # m/s/s/s
+const float MAX_ACCEL= 9;// # m/s/s
+
 
 const float MIN_SPEED = 0;
 

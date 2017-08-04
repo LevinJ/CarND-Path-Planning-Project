@@ -201,6 +201,7 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 }
 std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<double>> &sensor_fusion, double start_s){
 	std::map<int, Vehicle> predictions;
+	int pred_count = 0;
 	for (const auto& v : sensor_fusion)
 	{
 		int v_id = v[0];
@@ -232,7 +233,8 @@ std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<doub
 
 		//assume the other proceed with constant velocity along the road
 		std::vector<double> start_state = {new_s, s_dot, 0, d, 0, 0};
-		cout<<"vehicle="<<v_id << ", s="<<s<<", state="<<start_state<< endl;
+//		cout<<"vehicle s="<< s<<endl;
+		cout<<"predictions["<<pred_count++<<"] = Vehicle("<<start_state<<");"<<endl;
 		predictions[v_id] = Vehicle(start_state);
 	}
 	return predictions;
@@ -271,15 +273,17 @@ std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<doub
 	//get starting point based on last stored path
 	int consume_num =  m_last_waypoints_num - previous_path_x.size();
 
-
+//	cout<<"consumed="<< consume_num << ", m_last_waypoints_num="<<m_last_waypoints_num<< ", previous_path_x.size()="<<previous_path_x.size()<<endl;
+	cout<<"consumed="<< consume_num <<endl;
 	cout<<"estimated_s="<<m_last_waypoints_s[consume_num]<<", estimated_d="<<m_last_waypoints_d[consume_num]<<endl;
+
 
 
 	start_s = m_last_waypoints_s[consume_num + REUSE_PREV_POINTS_NUM];
 	start_d = m_last_waypoints_d[consume_num + REUSE_PREV_POINTS_NUM];;
-	cout<<"start_s="<<start_s<<", start_d="<<start_d<<endl;
+	cout<<"vector<double> start_s = "<<start_s<<"; vector<double> start_d = "<<start_d<<";"<<endl;
 
-	cout<<"consumed="<< consume_num << ", m_last_waypoints_num="<<m_last_waypoints_num<< ", previous_path_x.size()="<<previous_path_x.size()<<endl;
+
 
 
 	vector<vector<double>> temp_s;
@@ -306,7 +310,7 @@ std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<doub
 }
 
 void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
-	cout<<endl<<"best trajectory:"<<endl<<trjobj<<endl;
+//	cout<<endl<<"best trajectory:"<<endl<<trjobj<<endl;
 	m_next_x_vals = {};
 	m_next_y_vals = {};
 	double t = trjobj.t;

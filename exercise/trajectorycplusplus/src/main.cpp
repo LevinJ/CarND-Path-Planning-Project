@@ -24,23 +24,25 @@ int main() {
 	//keep lane
 
 	std::map<int, Vehicle> predictions;
-	predictions[0] = Vehicle({949.797, 15.2255, 0, 6.02025, 0, 0,});
-//	predictions[1] = Vehicle({1031.06, 16.2751, 0, 10.0789, 0, 0,});
-//	predictions[2] = Vehicle({887.9, 18.2031, 0, 10.0751, 0, 0,});
-//	predictions[3] = Vehicle({913.592, 18.6167, 0, 10.0257, 0, 0,});
-//	predictions[4] = Vehicle({876.173, 17.2366, 0, 5.8808, 0, 0,});
-//	predictions[5] = Vehicle({962.638, 15.495, 0, 9.99124, 0, 0, });
-//	predictions[6] = Vehicle({937.637, 15.8691, 0, 1.93111, 0, 0,});
-//	predictions[7] = Vehicle({943.225, 16.4024, 0, 9.98928, 0, 0});
-//	predictions[8] = Vehicle({904.896, 18.4822, 0, 2.27677, 0, 0, });
-//	predictions[9] = Vehicle({844.471, 12.3391, 0, 5.89112, 0, 0,});
-//	predictions[10] = Vehicle({874.706, 18.4883, 0, 1.87546, 0, 0,});
-//	predictions[11] = Vehicle({959.201, 15.3592, 0, 2.0641, 0, 0,});
+	predictions[3] = Vehicle({4914.85, 17.3248, 0, 6.02401, 0, 0, });
+
+
+//	predictions[0] = Vehicle({5086.83, 20.0965, 0, 10.3737, 0, 0, });
+//	predictions[1] = Vehicle({4783.18, 20.9676, 0, 6.19801, 0, 0, });
+//	predictions[2] = Vehicle({4902.15, 18.6779, 0, 9.67319, 0, 0, });
+//	predictions[3] = Vehicle({4914.85, 17.3248, 0, 6.02401, 0, 0, });
+//	predictions[4] = Vehicle({4750.67, 17.8621, 0, 2.39262, 0, 0, });
+//	predictions[5] = Vehicle({4775.35, 16.7066, 0, 2.12721, 0, 0, });
+//	predictions[6] = Vehicle({4849.37, 21.3008, 0, 6.30517, 0, 0, });
+//	predictions[7] = Vehicle({4933.6, 17.1547, 0, 6.56412, 0, 0, });
+//	predictions[8] = Vehicle({4873.87, 18.81, 0, 6.11818, 0, 0, });
+//	predictions[9] = Vehicle({4798.29, 16.5046, 0, 2.20831, 0, 0, });
+//	predictions[10] = Vehicle({4819.7, 20.1545, 0, 6.00302, 0, 0, });
 
 
 
-	vector<double> start_s = {901.971, 15.1819, 0.0116964};
-	vector<double> start_d = {6, -1.921e-12, 2.20705e-12};
+	vector<double> start_s = {4899.11, 19.1133, -0.546801}; vector<double> start_d = {6, 1.74294e-15, 1.48012e-17};
+
 	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
 
 

@@ -65,7 +65,8 @@ public:
 class TrjObject{
 public:
 	TrjObject(const std::vector<double> &s_goal_p, const std::vector<double> &d_goal_p,double t_p,
-			const std::vector<double> &unperturbed_s_p,const std::vector<double> &unperturbed_d_p, double unperturbed_t_p){
+			const std::vector<double> &unperturbed_s_p,const std::vector<double> &unperturbed_d_p,
+			double unperturbed_t_p, double intended_gap_p){
 		s_goal = s_goal_p;
 		d_goal = d_goal_p;
 		t = t_p;
@@ -73,6 +74,7 @@ public:
 		unperturbed_d = unperturbed_d_p;
 		unperturbed_t = unperturbed_t_p;
 		baccident = false;
+		intended_gap = intended_gap_p;
 
 	}
 	TrjObject(){
@@ -87,14 +89,15 @@ public:
 	std::vector<double> unperturbed_d;
 	double unperturbed_t;
 	bool baccident;
+	double intended_gap;
 };
 
 template <typename T>
 std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
 	if ( !v.empty() ) {
-		out << '[';
+		out << '{';
 		std::copy (v.begin(), v.end(), std::ostream_iterator<T>(out, ", "));
-		out << "]";
+		out << "}";
 	}
 	return out;
 }
