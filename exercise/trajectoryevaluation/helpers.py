@@ -1,6 +1,8 @@
 from math import sqrt, exp
 from matplotlib import pyplot as plt
 
+
+
 class Vehicle(object):
     """
     Helper class. Non-ego vehicles move w/ constant acceleration
@@ -65,7 +67,7 @@ def nearest_approach_to_any_vehicle(traj, vehicles):
 
 def nearest_approach(traj, vehicle):
     closest = 999999
-    s_,d_,t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    s_,d_,t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     s = to_equation(s_)
     d = to_equation(d_)
 #     closest_t = 0

@@ -14,68 +14,6 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
 
-
-bool close_enough(vector< double > poly, vector<double> target_poly, double eps=0.01) {
-
-
-	if(poly.size() != target_poly.size())
-	{
-		cout << "your solution didn't have the correct number of terms" << endl;
-		return false;
-	}
-	for(int i = 0; i < poly.size(); i++)
-	{
-		double diff = poly[i]-target_poly[i];
-		if(abs(diff) > eps)
-		{
-			cout << "at least one of your terms differed from target by more than " << eps << endl;
-			return false;
-		}
-
-	}
-	return true;
-}
-
-struct test_case {
-
-	vector<double> start;
-	vector<double> end;
-	double T;
-};
-
-vector< vector<double> > answers = {{0.0, 10.0, 0.0, 0.0, 0.0, 0.0},{0.0,10.0,0.0,0.0,-0.625,0.3125},{5.0,10.0,1.0,-3.0,0.64,-0.0432}};
-
-std::ostream& operator<< (std::ostream& out, const TrjObject& trj) {
-	out<<"s_coeff "<<trj.s_coeff<<endl;
-	out<<"d_coeff "<<trj.d_coeff<<endl;
-	out<<"t "<<trj.t<<endl;
-	out<<"unperturbed_s "<<trj.unperturbed_s<<endl;
-	out<<"unperturbed_d "<<trj.unperturbed_d<<endl;
-	out<<"unperturbed_t "<<trj.unperturbed_t<<endl;
-	out<<"s_goal "<<trj.s_goal<<endl;
-	out<<"d_goal "<<trj.d_goal<<endl;
-
-	double t = trj.t;
-	vector<double> s = trj.s_coeff;
-	vector<double> s_dot = differentiate(s);
-	vector<double> s_d_dot = differentiate(s_dot);
-
-
-	vector<double> S = {to_equation(s, t), to_equation(s_dot,t), to_equation(s_d_dot,t)};
-	out<<"S "<<S<<endl;
-
-	vector<double> d = trj.d_coeff;
-	vector<double> d_dot = differentiate(d);
-	vector<double> d_d_dot = differentiate(d_dot);
-
-
-	vector<double> D = {to_equation(d, t), to_equation(d_dot,t), to_equation(d_d_dot,t)};
-	out<<"D "<<D<<endl;
-
-	return out;
-}
-
-
 int main() {
 
 	Trajectory trj;
@@ -84,29 +22,42 @@ int main() {
 
 
 	//keep lane
-//	Vehicle vehicle({60,10,0, 2,0,0});
-//	std::map<int, Vehicle> predictions;
-//	predictions[0] = vehicle;
-//	vector<double> start_s = {0, 10, 0};
-//
-//	vector<double> start_d = {2, 0, 0};
-//	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
+
+	std::map<int, Vehicle> predictions;
+	predictions[0] = Vehicle({949.797, 15.2255, 0, 6.02025, 0, 0,});
+//	predictions[1] = Vehicle({1031.06, 16.2751, 0, 10.0789, 0, 0,});
+//	predictions[2] = Vehicle({887.9, 18.2031, 0, 10.0751, 0, 0,});
+//	predictions[3] = Vehicle({913.592, 18.6167, 0, 10.0257, 0, 0,});
+//	predictions[4] = Vehicle({876.173, 17.2366, 0, 5.8808, 0, 0,});
+//	predictions[5] = Vehicle({962.638, 15.495, 0, 9.99124, 0, 0, });
+//	predictions[6] = Vehicle({937.637, 15.8691, 0, 1.93111, 0, 0,});
+//	predictions[7] = Vehicle({943.225, 16.4024, 0, 9.98928, 0, 0});
+//	predictions[8] = Vehicle({904.896, 18.4822, 0, 2.27677, 0, 0, });
+//	predictions[9] = Vehicle({844.471, 12.3391, 0, 5.89112, 0, 0,});
+//	predictions[10] = Vehicle({874.706, 18.4883, 0, 1.87546, 0, 0,});
+//	predictions[11] = Vehicle({959.201, 15.3592, 0, 2.0641, 0, 0,});
+
+
+
+	vector<double> start_s = {901.971, 15.1819, 0.0116964};
+	vector<double> start_d = {6, -1.921e-12, 2.20705e-12};
+	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
 
 
 	//lane change
-	Vehicle vehicle({150,20,0, 2,0,0});
-	Vehicle vehicle_1 = Vehicle({100,10,0, 6,0,0});
-	std::map<int, Vehicle> predictions;
-	predictions[0] = vehicle;
-	predictions[1] = vehicle_1;
+//	Vehicle vehicle({150,20,0, 2,0,0});
+//	Vehicle vehicle_1 = Vehicle({100,10,0, 6,0,0});
+//	std::map<int, Vehicle> predictions;
+//	predictions[0] = vehicle;
+//	predictions[1] = vehicle_1;
 
-	vector<double> start_s = {30, 10, 0};
-	vector<double> start_d = {6, 0, 0};
-	TrjObject best = trj.LC(start_s, start_d, T, predictions, false, false);
+//	vector<double> start_s = {30, 10, 0};
+//	vector<double> start_d = {6, 0, 0};
+//	TrjObject best = trj.LC(start_s, start_d, T, predictions, false, false);
 
-	cout<<endl<<"best:"<<endl<<best<<endl;
-	double best_cost = trj.calculate_cost(best, predictions, true);
-	cout<<"best cost "<<best_cost<<endl;
+//	cout<<endl<<"best:"<<endl<<best<<endl;
+//	double best_cost = trj.calculate_cost(best, predictions, true);
+//	cout<<"best cost "<<best_cost<<endl;
 
 	return 0;
 }

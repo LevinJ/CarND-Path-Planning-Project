@@ -2,22 +2,55 @@ import numpy as np
 import random
 from cost_functions import *
 from constants import *
+import math
+
+
+
+class TrjObject(object):
+
+    def __init__(self, s_goal_p, d_goal_p, t_p,
+            unperturbed_s_p,unperturbed_d_p, unperturbed_t_p):
+        self.s_goal = s_goal_p;
+        self.d_goal = d_goal_p;
+        self.t = t_p;
+        self.unperturbed_s = unperturbed_s_p;
+        self.unperturbed_d = unperturbed_d_p;
+        self.unperturbed_t = unperturbed_t_p;
+        self.baccident = False;
+        return
+    def __str__(self):
+        temp_str = "s_gaol={},d_goal={}, t= {}, \nunperturbed_s={},unperturbed_d={},unperturbed_t={},\
+        baccident={}\n".format(self.s_goal, self.d_goal,self.t,self.unperturbed_s,self.unperturbed_d,self.unperturbed_t,self.baccident)
+        return temp_str;
+
+    
+    
+#     std::vector<double> s_goal;
+#     std::vector<double> d_goal;
+#     std::vector<double> s_coeff;
+#     std::vector<double> d_coeff;
+#     double t;
+#     std::vector<double> unperturbed_s;
+#     std::vector<double> unperturbed_d;
+#     double unperturbed_t;
+#     bool baccident;
+
 
 # TODO - tweak weights to existing cost functions
 WEIGHTED_COST_FUNCTIONS = [
-    (time_diff_cost,    1),
+    (time_diff_cost,    0),
     (s_diff_cost,       1),
-    (d_diff_cost,       1),
+#     (d_diff_cost,       1),
 #     (efficiency_cost,   1),
-    (max_jerk_cost,     1),
+    (max_jerk_cost,     10),
     (total_jerk_cost,   1),
     (collision_cost,    10),
     (buffer_cost,       1),
-    (max_accel_cost,    1),
+    (max_accel_cost,    10),
     (total_accel_cost,  1),
 #     (min_speed_cost,    1),
-    (exceeds_speed_limit_cost, 1),
-    (stays_on_road_cost,    1)
+    (exceeds_speed_limit_cost, 10),
+    (stays_on_road_cost,    10)
 ]
 
 m_current_behaviour = ""
@@ -75,46 +108,90 @@ def LC(start_s, start_d, T, predictions, prepare=True, left= True):
     
              
 def keep_lane(start_s, start_d, T, predictions):
-    has_target = False
-    s = start_s[0]
-    d = start_d[0]
-    in_front = [(v_id, v) for (v_id, v) in predictions.items() if get_lane_num(v.start_state[3]) == get_lane_num(d) and v.start_state[0] > s ]
-    
-    
-    
-    if len(in_front)>0:
-    
-        leading = min(in_front, key=lambda v: v[1].start_state[0] - s)
-        leading_id = leading[0]
-        leading = leading[1].start_state
+    s = start_s[0];
+    d = start_d[0];
+    leading_id = -1;
+    distance = math.inf;
+    #Find leading vehicle in the same lane
+    for k, v in predictions.items():
+        if get_lane_num(v.start_state[3]) != get_lane_num(d) or v.start_state[0] < s:
+            continue;
         
-        distance = leading[0] - s
+        if (v.start_state[0] -s)< distance:
+            distance = v.start_state[0] -s;
+            leading_id = k;
         
-        max_distance = (SPEED_LIMIT - leading[1])* T
-        if (distance < max_distance + SAFE_DISTANCE_BUFFER):
-            has_target = True
     
-    if has_target:
-#         target_vehicle = leading_id
-#         delta = [-SAFE_DISTANCE_BUFFER, 0,0,0,0,0]
-#         return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions)
-        target_vehicle = leading_id
-        delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[target_vehicle].start_state[3];
-        deta_s = predictions[target_vehicle].start_state[0] - start_s[0];
-        if deta_s < SAFE_DISTANCE_BUFFER:
-            #let's get away from the leading vehicle till a safe distance by and by
-            deta_s = deta_s + 5;
-        else:
-            deta_s = SAFE_DISTANCE_BUFFER;
+    if leading_id !=-1:
+        #if we have leading vehicle, check whether it's within safe distance
+        cur_distance = predictions[leading_id].start_state[0] - start_s[0];
+        if cur_distance < SAFE_DISTANCE_BUFFER:
+           
+            #make sure we do not change lanes
+            delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[leading_id].start_state[3];
+            delta = [0, 0,0,delta_d,0,0];
+            print("trj: keep lane, has target " + str(leading_id) + ", target vehicle state=" + str(predictions[leading_id].start_state));
+
+            trjobj =  follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
+            print("old distance=" + str(cur_distance) + ", new distance=" + str((predictions[leading_id].state_in(T)[0] - trjobj.s_goal[0])))
+            return trjobj;
         
-        delta = [-deta_s, 0,0,delta_d,0,0];
-        print("keep lane, has target " + str(leading_id) + " delta, " + str(delta));
-        return follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions);
-       
-    else:
-        goal_s = [s+ (SPEED_LIMIT + start_s[1])*T/2, SPEED_LIMIT, 0]
-        goal_d = [0,0,0]
-        return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
+    
+
+    #follow a reasonably set goal
+    avg_speed = (SPEED_LIMIT + start_s[1])/2;
+    if avg_speed > SPEED_LIMIT:
+        avg_speed = SPEED_LIMIT;
+    
+    print("trj: keep lane, no target, " + str(avg_speed))
+    goal_s = [s+ avg_speed*T, SPEED_LIMIT, 0];
+
+
+    goal_d = [get_lane_dist(get_lane_num(start_d[0])),0,0];
+    trjobj =  follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions)
+    print("planned T=" + ", actual T=" + str(trjobj.t))
+    return trjobj;
+#     has_target = False
+#     s = start_s[0]
+#     d = start_d[0]
+#     in_front = [(v_id, v) for (v_id, v) in predictions.items() if get_lane_num(v.start_state[3]) == get_lane_num(d) and v.start_state[0] > s ]
+#     
+#     
+#     
+#     if len(in_front)>0:
+#     
+#         leading = min(in_front, key=lambda v: v[1].start_state[0] - s)
+#         leading_id = leading[0]
+#         leading = leading[1].start_state
+#         
+#         deta_distance = leading[0] - s
+#         
+#         if deta_distance < SAFE_DISTANCE_BUFFER + 5:
+#             #let's increase the gap in a stable/gradual fashion
+#             deta_distance = deta_distance + 10;
+#             if(deta_distance >SAFE_DISTANCE_BUFFER):
+#                 deta_distance = SAFE_DISTANCE_BUFFER;
+#             deta_distance = 4
+#             
+#             #make sure we do not change lanes
+#             delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[leading_id].start_state[3];
+#             delta = [-deta_distance, 0,0,delta_d,0,0];
+#             print("trj: keep lane, has target " + str(leading_id) + " delta, "+str(delta));
+# 
+#             return follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
+#     
+#    
+#     #follow a reasonably set goal
+#     avg_speed = (SPEED_LIMIT + start_s[1])/2;
+#     if avg_speed > SPEED_LIMIT:
+#         avg_speed = SPEED_LIMIT
+#     
+#     print("trj: keep lane, no target, "+ str(avg_speed));
+#     goal_s = [s+ avg_speed*T, SPEED_LIMIT, 0];
+# 
+# 
+#     goal_d = [get_lane_dist(get_lane_num(start_d[0])),0,0];
+#     return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
         
         
 
@@ -127,32 +204,89 @@ def follow_vehicle(start_s, start_d, T, target_vehicle, delta,  predictions):
     return PTG(start_s, start_d,all_goals, T,predictions)
 
 def perturb_goals(start_s, start_d, T, goal_s, goal_d, target_vehicle, delta,predictions):
+    
+    delta_s_distances=[]
+    
+    min_dist = COLLISION_DISTANCE
+    max_dist = SAFE_DISTANCE_BUFFER + 30
+    d_s_dist = 5
+
+    s_distance = min_dist;
+    while s_distance < max_dist:
+        delta_s_distances.append(-s_distance)
+        s_distance += d_s_dist
+    
+    
+
+
     all_goals = []
-    timestep = 0.5
-    t = T - 4 * timestep
+
+    if target_vehicle == -1:
+        #if we do not follow any vehicle, we purturb the t only
+        #this is because we may not be able to reach speed limit with given T
+        timestep = 0.5
+        t = T - 4 * timestep
+        while t <= T + 4 * timestep:
+            all_goals.push_back(TrjObject(goal_s,goal_d,t,goal_s,goal_d, T))
+            t = t + timestep
+        
+
+        return all_goals;
     
-    if goal_s is None:
-        folllow_vehicle = True
-    else:
-        folllow_vehicle = False
+
+
+    target = predictions[target_vehicle]
+    target_vehicle_state = target.state_in(T)
+
+    for delta_distace in delta_s_distances:
+
+
+
+        purturbed_goal_s = [target_vehicle_state[0] + delta_distace, target_vehicle_state[1]+delta[1],0];
+        if purturbed_goal_s[0] < 0:
+            #s should always be positve number
+            purturbed_goal_s[0] = 5;
         
-    while t <= T + 4 * timestep:
+        if purturbed_goal_s[1] > SPEED_LIMIT:
+            #make sure we do not exceed speed limit when following vehicles
+            purturbed_goal_s[1] = SPEED_LIMIT
         
-        if folllow_vehicle:
-            target = predictions[target_vehicle]
-            target_state = np.array(target.state_in(t)) + np.array(delta)
-            goal_s = target_state[:3]
-            goal_d = target_state[3:]
-        
-        all_goals.append((goal_s,goal_d, t,goal_s,goal_d))
-        print("t {}, goal {} {}, unperturbed {} {}".format(t, goal_s, goal_d, goal_s, goal_d))
-        for _ in range(N_SAMPLES):
-            perturbed = perturb_goal(goal_s, goal_d)
-           
-            all_goals.append((perturbed[0], perturbed[1], t,goal_s,goal_d))
-        t += timestep
+        purturbed_goal_d = [target_vehicle_state[3] + delta[3],
+                target_vehicle_state[4]+delta[4],target_vehicle_state[5]+delta[5]]
+        #the only we purturbed here is the s
+        goal_s= [target_vehicle_state[0] - SAFE_DISTANCE_BUFFER, purturbed_goal_s[1], purturbed_goal_s[2]];
+        goal_d = purturbed_goal_d;
+        all_goals.append(TrjObject(purturbed_goal_s,purturbed_goal_d,T,goal_s,goal_d, T));
     
-    return all_goals
+    return all_goals;
+#     all_goals = []
+#     timestep = 0.5
+#     t = T - 4 * timestep
+#     
+#     if goal_s is None:
+#         folllow_vehicle = True
+#     else:
+#         folllow_vehicle = False
+#         
+#     while t <= T + 4 * timestep:
+#         
+#         if folllow_vehicle:
+#             target = predictions[target_vehicle]
+#             target_state = np.array(target.state_in(t)) + np.array(delta)
+#             goal_s = target_state[:3]
+#             goal_d = target_state[3:]
+#         
+#         all_goals.append((goal_s,goal_d, t,goal_s,goal_d))
+#         print("t {}, goal {} {}, unperturbed {} {}".format(t, goal_s, goal_d, goal_s, goal_d))
+#         for _ in range(N_SAMPLES):
+#             perturbed = perturb_goal(goal_s, goal_d)
+#            
+#             all_goals.append((perturbed[0], perturbed[1], t,goal_s,goal_d))
+#         t += timestep
+#         
+        
+    
+#     return all_goals
 
 def follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions):
     all_goals = perturb_goals(start_s, start_d, T, goal_s, goal_d, None, None,predictions)
@@ -161,7 +295,7 @@ def follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions):
 
 
     
-def PTG(start_s, start_d,all_goals, T,predictions):
+def PTG(start_s, start_d,all_trjs, T,predictions):
     """
     Finds the best trajectory according to WEIGHTED_COST_FUNCTIONS (global).
 
@@ -191,31 +325,59 @@ def PTG(start_s, start_d,all_goals, T,predictions):
      best_d gives coefficients for d(t) and best_t gives duration associated w/ 
      this trajectory.
     """
+    min_cost =  math.inf;
+    count = 1
+    best_count = 0;
+    for trj in all_trjs:
+        print("trj {}".format(count))
+        count = count + 1
+        trj.s_coeff = JMT(start_s, trj.s_goal, trj.t);
+        trj.d_coeff = JMT(start_d, trj.d_goal, trj.t);
+
+        cost = calculate_cost(trj, predictions, WEIGHTED_COST_FUNCTIONS);
+        if(cost < min_cost):
+            best =trj;
+            min_cost = cost;
+            best_count = count;
+        
+        
+    
+    print("\n#####best trjid={}, min cost = {}, \nbest trj={}".format(best_count, min_cost, best))
+    if min_cost >=10:
+        best.baccident = True
+    else:
+        best.baccident = False
+
+    
+    return best;
+
     
     # generate alternative goals
     
     
     # find best trajectory
-    trajectories = []
-    for goal in all_goals:
-        s_goal, d_goal, t, unperturbed_s,unperturbed_d = goal
-        s_coefficients = JMT(start_s, s_goal, t)
-#         print("start_d: {}, d_goal{}".format(start_d, d_goal))
-        d_coefficients = JMT(start_d, d_goal, t)
-        trajectories.append(tuple([s_coefficients, d_coefficients, t, unperturbed_s,unperturbed_d, T]))
-    
-    best = min(trajectories, key=lambda tr: calculate_cost(tr, predictions, WEIGHTED_COST_FUNCTIONS))
-    
-    return best
+#     trajectories = []
+#     for goal in all_goals:
+#         s_goal, d_goal, t, unperturbed_s,unperturbed_d = goal
+#         s_coefficients = JMT(start_s, s_goal, t)
+# #         print("start_d: {}, d_goal{}".format(start_d, d_goal))
+#         d_coefficients = JMT(start_d, d_goal, t)
+#         trajectories.append(tuple([s_coefficients, d_coefficients, t, unperturbed_s,unperturbed_d, T]))
+#     
+#     best = min(trajectories, key=lambda tr: calculate_cost(tr, predictions, WEIGHTED_COST_FUNCTIONS))
+#     
+#     return best
     
 
 def calculate_cost(trajectory,  predictions, cost_functions_with_weights, verbose=False):
     cost = 0
+    verbose = True
     for cf, weight in cost_functions_with_weights:
         new_cost = weight * cf(trajectory, predictions)
         cost += new_cost
         if verbose:
             print("cost for {} is \t {}".format(cf.__name__, new_cost))
+    print("trajectory {}, cost {}".format(trajectory , cost))
     return cost
 
 def perturb_goal(goal_s, goal_d):

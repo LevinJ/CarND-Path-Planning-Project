@@ -16,19 +16,20 @@
 
 using namespace std;
 
+
 class ElapsedClock
 {
 public:
-    ElapsedClock() : beg_(clock_::now()) {}
-    void reset() { beg_ = clock_::now(); }
-    double elapsed() const {
-        return std::chrono::duration_cast<chrono::milliseconds>
-            (clock_::now() - beg_).count(); }
+	ElapsedClock() : beg_(clock_::now()) {}
+	void reset() { beg_ = clock_::now(); }
+	double elapsed() const {
+		return std::chrono::duration_cast<chrono::milliseconds>
+		(clock_::now() - beg_).count(); }
 
 private:
-    typedef std::chrono::high_resolution_clock clock_;
+	typedef std::chrono::high_resolution_clock clock_;
 
-    std::chrono::time_point<clock_> beg_;
+	std::chrono::time_point<clock_> beg_;
 };
 
 class Vehicle{
@@ -63,33 +64,29 @@ public:
 
 class TrjObject{
 public:
+	TrjObject(const std::vector<double> &s_goal_p, const std::vector<double> &d_goal_p,double t_p,
+			const std::vector<double> &unperturbed_s_p,const std::vector<double> &unperturbed_d_p, double unperturbed_t_p){
+		s_goal = s_goal_p;
+		d_goal = d_goal_p;
+		t = t_p;
+		unperturbed_s = unperturbed_s_p;
+		unperturbed_d = unperturbed_d_p;
+		unperturbed_t = unperturbed_t_p;
+		baccident = false;
+
+	}
+	TrjObject(){
+
+	}
+	std::vector<double> s_goal;
+	std::vector<double> d_goal;
 	std::vector<double> s_coeff;
 	std::vector<double> d_coeff;
 	double t;
 	std::vector<double> unperturbed_s;
 	std::vector<double> unperturbed_d;
 	double unperturbed_t;
-	std::vector<double> s_goal;
-	std::vector<double> d_goal;
 	bool baccident;
-};
-
-class TrjGoal{
-public:
-	TrjGoal(const std::vector<double> &s_goal_p, const std::vector<double> &d_goal_p,double t_p,
-			const std::vector<double> &unperturbed_s_p,const std::vector<double> &unperturbed_d_p){
-		s_goal = s_goal_p;
-		d_goal = d_goal_p;
-		t = t_p;
-		unperturbed_s = unperturbed_s_p;
-		unperturbed_d = unperturbed_d_p;
-
-	}
-	std::vector<double> s_goal;
-	std::vector<double> d_goal;
-	double t;
-	std::vector<double> unperturbed_s;
-	std::vector<double> unperturbed_d;
 };
 
 template <typename T>
@@ -114,6 +111,6 @@ public:
 	virtual ~Helper();
 };
 
-
+std::ostream& operator<< (std::ostream& out, const TrjObject& trj);
 
 #endif /* EXERCISE_TRAJECTORYCPLUSPLUS_SRC_HELPER_H_ */

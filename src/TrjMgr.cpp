@@ -19,36 +19,6 @@ static tk::spline m_y_spline;
 static tk::spline m_dx_spline;
 static tk::spline m_dy_spline;
 
-std::ostream& operator<< (std::ostream& out, const TrjObject& trj) {
-	out<<"s_coeff "<<trj.s_coeff<<endl;
-	out<<"d_coeff "<<trj.d_coeff<<endl;
-	out<<"t "<<trj.t<<endl;
-	out<<"unperturbed_s "<<trj.unperturbed_s<<endl;
-	out<<"unperturbed_d "<<trj.unperturbed_d<<endl;
-	out<<"unperturbed_t "<<trj.unperturbed_t<<endl;
-	out<<"s_goal "<<trj.s_goal<<endl;
-	out<<"d_goal "<<trj.d_goal<<endl;
-
-	double t = trj.t;
-	vector<double> s = trj.s_coeff;
-	vector<double> s_dot = differentiate(s);
-	vector<double> s_d_dot = differentiate(s_dot);
-
-
-	vector<double> S = {to_equation(s, t), to_equation(s_dot,t), to_equation(s_d_dot,t)};
-	out<<"S "<<S<<endl;
-
-	vector<double> d = trj.d_coeff;
-	vector<double> d_dot = differentiate(d);
-	vector<double> d_d_dot = differentiate(d_dot);
-
-
-	vector<double> D = {to_equation(d, t), to_equation(d_dot,t), to_equation(d_d_dot,t)};
-	out<<"D "<<D<<endl;
-
-	return out;
-}
-
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
@@ -260,9 +230,9 @@ std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<doub
 		//since we are planning JMT for the future
 		double new_s = s + s_dot * REUSE_PREV_POINTS_NUM * FRAME_UPDATE_TIME;
 
-		cout<<"vehicle="<<v_id << " ,s="<< s <<", new_s="<<new_s<<", v=" << s_dot <<", d=" << d << endl;
 		//assume the other proceed with constant velocity along the road
 		std::vector<double> start_state = {new_s, s_dot, 0, d, 0, 0};
+		cout<<"vehicle="<<v_id << ", s="<<s<<", state="<<start_state<< endl;
 		predictions[v_id] = Vehicle(start_state);
 	}
 	return predictions;
@@ -309,7 +279,7 @@ std::vector<std::vector<double>> TrjMgr::process_prevpath(const std::vector<doub
 	start_d = m_last_waypoints_d[consume_num + REUSE_PREV_POINTS_NUM];;
 	cout<<"start_s="<<start_s<<", start_d="<<start_d<<endl;
 
-	cout<<"consumed="<< consume_num << "m_last_waypoints_num="<<m_last_waypoints_num<< ", previous_path_x.size()="<<previous_path_x.size()<<endl;
+	cout<<"consumed="<< consume_num << ", m_last_waypoints_num="<<m_last_waypoints_num<< ", previous_path_x.size()="<<previous_path_x.size()<<endl;
 
 
 	vector<vector<double>> temp_s;

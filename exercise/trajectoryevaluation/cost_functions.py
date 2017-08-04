@@ -7,7 +7,8 @@ def time_diff_cost(traj, predictions):
     Penalizes trajectories that span a duration which is longer or 
     shorter than the duration requested.
     """
-    _, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    t = traj.t;
+    unperturbed_t = traj.unperturbed_t;
     return logistic(float(abs(t-unperturbed_t)) / unperturbed_t)
 
 def s_diff_cost(traj, predictions):
@@ -15,7 +16,7 @@ def s_diff_cost(traj, predictions):
     Penalizes trajectories whose s coordinate (and derivatives) 
     differ from the goal.
     """
-    s, _, t, unperturbed_s,_,_ = traj
+    s, _, t, unperturbed_s,_,_ = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     
     
     S = [f(t) for f in get_f_and_N_derivatives(s, 2)]
@@ -30,7 +31,7 @@ def d_diff_cost(traj, predictions):
     Penalizes trajectories whose d coordinate (and derivatives) 
     differ from the goal.
     """
-    _, d_coeffs, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    _, d_coeffs, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     
     d_dot_coeffs = differentiate(d_coeffs)
     d_ddot_coeffs = differentiate(d_dot_coeffs)
@@ -65,7 +66,7 @@ def buffer_cost(traj, predictions):
     return logistic(2*VEHICLE_RADIUS / nearest)
     
 def stays_on_road_cost(traj, predictions):
-    _, d_coeffs, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    _, d_coeffs, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     
     d = to_equation(d_coeffs)
     all_ds = [d(float(t)/100 * i) for i in range(100)]
@@ -77,7 +78,7 @@ def stays_on_road_cost(traj, predictions):
     
 
 def exceeds_speed_limit_cost(traj, predictions):
-    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     speed = differentiate(s)
    
     speed = to_equation(speed)
@@ -85,9 +86,10 @@ def exceeds_speed_limit_cost(traj, predictions):
     max_speed = max(all_speeds)
     min_speed = min(all_speeds)
     
-    if max_speed < SPEED_LIMIT and min_speed> MIN_SPEED:
+    if max_speed <= SPEED_LIMIT and min_speed>= MIN_SPEED:
         return 0
     else:
+        print("max_v={}, min_v={}".format(max_speed, min_speed))
         return 1
     
 
@@ -96,7 +98,7 @@ def efficiency_cost(traj, predictions):
     """
     Rewards high average speeds.
     """
-    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    s, _, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     s = to_equation(s)
     avg_v = float(s(t)) / t
     targ_s, _, _, _, _, _ = predictions[target_vehicle].state_in(t)
@@ -104,7 +106,7 @@ def efficiency_cost(traj, predictions):
     return logistic(2*float(targ_v - avg_v) / avg_v)
 
 def total_accel_cost(traj,  predictions):
-    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     a = to_equation(s_d_dot)
@@ -119,7 +121,7 @@ def total_accel_cost(traj,  predictions):
     return logistic(acc_per_second / EXPECTED_ACC_IN_ONE_SEC )
     
 def max_accel_cost(traj, predictions):
-    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     a = to_equation(s_d_dot)
@@ -130,18 +132,20 @@ def max_accel_cost(traj, predictions):
     
 
 def max_jerk_cost(traj, predictions):
-    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     jerk = differentiate(s_d_dot)
     jerk = to_equation(jerk)
     all_jerks = [jerk(float(t)/100 * i) for i in range(100)]
     max_jerk = max(all_jerks, key=abs)
-    if abs(max_jerk) > MAX_JERK: return 1
+    if abs(max_jerk) > MAX_JERK: 
+        print("max_jerk={}".format(max_jerk))
+        return 1
     else: return 0
 
 def total_jerk_cost(traj, predictions):
-    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj
+    s, d, t, unperturbed_s,unperturbed_d,unperturbed_t = traj.s_coeff, traj.d_coeff, traj.t, traj.unperturbed_s, traj.unperturbed_d, traj.unperturbed_t
     s_dot = differentiate(s)
     s_d_dot = differentiate(s_dot)
     jerk = to_equation(differentiate(s_d_dot))

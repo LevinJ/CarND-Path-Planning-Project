@@ -36,8 +36,8 @@ std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
 
 Trajectory::Trajectory() {
 	m_cost_map["time_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
-	m_cost_map["s_diff_cost"] = CostFuncWeight(&s_diff_cost, 1);
-	m_cost_map["d_diff_cost"] = CostFuncWeight(&d_diff_cost, 1);
+	m_cost_map["s_diff_cost"] = CostFuncWeight(&s_diff_cost, 3);
+	//	m_cost_map["d_diff_cost"] = CostFuncWeight(&d_diff_cost, 1);
 	m_cost_map["max_jerk_cost"] = CostFuncWeight(&max_jerk_cost, 10);
 	m_cost_map["total_jerk_cost"] = CostFuncWeight(&total_jerk_cost, 1);
 	m_cost_map["collision_cost"] = CostFuncWeight(&collision_cost, 10);
@@ -134,42 +134,35 @@ vector<double> Trajectory::JMT(vector< double> start, vector <double> end, doubl
  */
 
 TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<double> &start_d,
-		const std::vector<TrjGoal> &all_goals, double T,const std::map<int, Vehicle> &predictions){
-	vector<TrjObject> trajectories = {};
+		std::vector<TrjObject> &all_trjs, double T,const std::map<int, Vehicle> &predictions){
 
-	for(const auto &goal: all_goals){
-
-		vector<double> s_coefficients = JMT(start_s, goal.s_goal, goal.t);
-		vector<double> d_coefficients = JMT(start_d, goal.d_goal, goal.t);
-		TrjObject trjobj;
-		trjobj.s_coeff = s_coefficients;
-		trjobj.d_coeff = d_coefficients;
-		trjobj.t = goal.t;
-		trjobj.unperturbed_s = goal.unperturbed_s;
-		trjobj.unperturbed_d = goal.unperturbed_d;
-		trjobj.unperturbed_t = T;
-		trjobj.s_goal = goal.s_goal;
-		trjobj.d_goal = goal.d_goal;
-
-		trajectories.push_back(trjobj);
-	}
-	//Find the trajectory with the lowest cost
 	double min_cost =  INFINITY;
 	TrjObject best;
-	for(auto &trj: trajectories ){
-		double cost = calculate_cost(trj, predictions);
-		//		cout<<"s_goal "<<trj.s_goal<<"d_goal "<<trj.d_goal << "t "<<trj.t <<"cost "<<cost<<endl;
+	int count = 1;
+	int best_count = 0;
+	for(auto &trj: all_trjs){
+
+
+		trj.s_coeff = JMT(start_s, trj.s_goal, trj.t);
+		trj.d_coeff = JMT(start_d, trj.d_goal, trj.t);
+		cout<<"#trjid="<<count<<endl;
+		count++;
+
+		double cost = calculate_cost(trj, predictions, true);
 		if(cost < min_cost){
 			best =trj;
 			min_cost = cost;
+			best_count = count;
 		}
+
 	}
+	cout<<"#####best trjid=" << best_count<< ", min cost ="<<min_cost<<"\nbest trj="<<best<<endl;
 	if(min_cost >=10){
 		best.baccident = true;
 	}else{
 		best.baccident = false;
 	}
-	calculate_cost(best, predictions, true);
+//	calculate_cost(best, predictions, true);
 	return best;
 }
 
@@ -184,13 +177,79 @@ double Trajectory::calculate_cost(const TrjObject &trajectory,  const std::map<i
 			cout<< "cost for "<<kv.first << " is "<< new_cost << endl;
 		}
 	}
+	cout<<"overall cost="<< cost<<"\ntrj="<<trajectory<<endl;
 	return cost;
 }
 
-std::vector<TrjGoal> Trajectory::perturb_goals(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
+std::vector<TrjObject> Trajectory::perturb_goals(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
 		std::vector<double> &goal_s, std::vector<double> &goal_d,
 		int target_vehicle, const std::vector<double> &delta,std::map<int, Vehicle> &predictions){
-	std::vector<TrjGoal> all_goals = {};
+
+	//if we are to follow vehicles, the target gap sometimes it's hard to determin
+	//due to the various scenarios that might occur (for example, the leading vehicle comes to
+	//a still stop, the leading vehicle is driving past speed limit)
+	static bool firsttime = true;
+	static vector<double> delta_s_distances={};
+	if(firsttime){
+		firsttime = false;
+		double min_dist = COLLISION_DISTANCE;
+		double max_dist = SAFE_DISTANCE_BUFFER + 30;
+		double d_s_dist = 5;
+
+		double s_distance = min_dist;
+		while(s_distance < max_dist){
+			delta_s_distances.push_back(-s_distance);
+			s_distance += d_s_dist;
+		}
+	}
+
+
+	std::vector<TrjObject> all_trjs = {};
+
+	if(target_vehicle == -1){
+		//if we do not follow any vehicle, we purturb the t only
+		//this is because we may not be able to reach speed limit with given T
+		double timestep = 0.5;
+		double t = T - 4 * timestep;
+		while(t <= T + 4 * timestep){
+			all_trjs.push_back(TrjObject(goal_s,goal_d,t,goal_s,goal_d, T));
+			t = t + timestep;
+		}
+
+		return all_trjs;
+	}
+
+
+	const Vehicle &target = predictions[target_vehicle];
+	vector<double> target_vehicle_state = target.state_in(T);
+
+	for(auto &delta_distace:delta_s_distances){
+
+
+
+		vector<double> purturbed_goal_s = {target_vehicle_state[0] + delta_distace, target_vehicle_state[1]+delta[1],0};
+		if(purturbed_goal_s[0] < 0){
+			//s should always be positve number
+			purturbed_goal_s[0] = 5;
+		}
+		if(purturbed_goal_s[1] > SPEED_LIMIT){
+			//make sure we do not exceed speed limit when following vehicles
+			purturbed_goal_s[1] = SPEED_LIMIT;
+		}
+		vector<double> purturbed_goal_d = {target_vehicle_state[3] + delta[3],
+				target_vehicle_state[4]+delta[4],target_vehicle_state[5]+delta[5]};
+		//the only we purturbed here is the s
+		goal_s= {target_vehicle_state[0] - SAFE_DISTANCE_BUFFER, purturbed_goal_s[1], purturbed_goal_s[2]};
+		goal_d = purturbed_goal_d;
+		all_trjs.push_back(TrjObject(purturbed_goal_s,purturbed_goal_d,T,goal_s,goal_d, T));
+	}
+	return all_trjs;
+
+
+
+
+
+	/*std::vector<TrjGoal> all_goals = {};
 	double timestep = 0.5;
 	double t = T - 4 * timestep;
 	bool folllow_vehicle = true;
@@ -222,41 +281,44 @@ std::vector<TrjGoal> Trajectory::perturb_goals(const std::vector<double> &start_
 		t += timestep;
 	}
 	return all_goals;
+	 */
+
+
 }
 
 /*
  * Returns a "perturbed" version of the goal.
  */
-std::vector<std::vector<double>> Trajectory::perturb_goal(const std::vector<double> &goal_s, const std::vector<double> &goal_d){
-	vector<double> new_s_goal = {};
-	//random goal s
-	for(int i=0; i< goal_s.size(); i++){
-		double x = goal_s[i];
-		double sigma_s = SIGMA_S[i];
-		random_device rd;
-		default_random_engine gen(rd());
-		normal_distribution<double> dist_x(x, sigma_s);
-		new_s_goal.push_back(dist_x(gen));
-	}
-	//let's not change the acceleration
-	new_s_goal[2] = goal_s[2];
-	//random goal d
-	//	vector<double> new_s_goal = {};
-	//	for(int i=0; i< goal_d.size(); i++){
-	//		double x = goal_d[i];
-	//		double sigma_d = SIGMA_D[i];
-	//		random_device rd;
-	//		default_random_engine gen(rd());
-	//		normal_distribution<double> dist_x(x, sigma_d);
-	//		new_d_goal.push_back(dist_x(gen));
-	//	}
-	vector<double> new_d_goal = goal_d;
-	return {new_s_goal, new_d_goal};
-}
+//std::vector<std::vector<double>> Trajectory::perturb_goal(const std::vector<double> &goal_s, const std::vector<double> &goal_d){
+//	vector<double> new_s_goal = {};
+//	//random goal s
+//	for(int i=0; i< goal_s.size(); i++){
+//		double x = goal_s[i];
+//		double sigma_s = SIGMA_S[i];
+//		random_device rd;
+//		default_random_engine gen(rd());
+//		normal_distribution<double> dist_x(x, sigma_s);
+//		new_s_goal.push_back(dist_x(gen));
+//	}
+//	//let's not change the acceleration
+//	new_s_goal[2] = goal_s[2];
+//	//random goal d
+//	//	vector<double> new_s_goal = {};
+//	//	for(int i=0; i< goal_d.size(); i++){
+//	//		double x = goal_d[i];
+//	//		double sigma_d = SIGMA_D[i];
+//	//		random_device rd;
+//	//		default_random_engine gen(rd());
+//	//		normal_distribution<double> dist_x(x, sigma_d);
+//	//		new_d_goal.push_back(dist_x(gen));
+//	//	}
+//	vector<double> new_d_goal = goal_d;
+//	return {new_s_goal, new_d_goal};
+//}
 
 TrjObject Trajectory::follow_goal(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
 		std::vector<double> &goal_s, std::vector<double> &goal_d,  std::map<int, Vehicle> &predictions){
-	std::vector<TrjGoal> all_goals = perturb_goals(start_s, start_d, T, goal_s, goal_d, -1, {},predictions);
+	std::vector<TrjObject> all_goals = perturb_goals(start_s, start_d, T, goal_s, goal_d, -1, {},predictions);
 	return PTG(start_s, start_d,all_goals, T,predictions);
 
 }
@@ -265,7 +327,7 @@ TrjObject Trajectory::follow_vehicle(const std::vector<double> &start_s, const s
 		int target_vehicle, const std::vector<double> &delta,  std::map<int, Vehicle> &predictions){
 	std::vector<double> goal_s = {};
 	std::vector<double> goal_d = {};
-	std::vector<TrjGoal>  all_goals = perturb_goals(start_s, start_d, T, goal_s,
+	std::vector<TrjObject>  all_goals = perturb_goals(start_s, start_d, T, goal_s,
 			goal_d, target_vehicle, delta,predictions);
 	return PTG(start_s, start_d,all_goals, T,predictions);
 }
@@ -291,18 +353,20 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 	if(leading_id !=-1){
 		//if we have leading vehicle, check whether it's within safe distance
 		double cur_distance = predictions[leading_id].start_state[0] - start_s[0];
-		if (cur_distance < SAFE_DISTANCE_BUFFER + 5){
+		if (cur_distance < SAFE_DISTANCE_BUFFER){
 			//let's increase the gap in a stable/gradual fashion
-			double deta_distance = cur_distance + 10;
-			if(deta_distance >SAFE_DISTANCE_BUFFER){
-				deta_distance = SAFE_DISTANCE_BUFFER;
-			}
+			//			double deta_distance = cur_distance + 10;
+			//			if(deta_distance >SAFE_DISTANCE_BUFFER){
+			//				deta_distance = SAFE_DISTANCE_BUFFER;
+			//			}
 			//make sure we do not change lanes
 			double delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[leading_id].start_state[3];
-			vector<double> delta = {-deta_distance, 0,0,delta_d,0,0};
-			cout<<"trj: keep lane, has target "<<leading_id<<" delta, "<<delta<<endl;
+			vector<double> delta = {0, 0,0,delta_d,0,0};
+			cout<<"trj: keep lane, has target "<<leading_id<<", target vehicle state="<<predictions[leading_id].start_state<<endl;
 
-			return follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
+			TrjObject trjobj =  follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
+			cout<<"old distance="<<cur_distance<<", new distance="<<(predictions[leading_id].state_in(T)[0] - trjobj.s_goal[0]) <<endl;
+			return trjobj;
 		}
 	}
 
@@ -316,7 +380,9 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 
 
 	vector<double> goal_d = {get_lane_dist(get_lane_num(start_d[0])),0,0};
-	return follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+	TrjObject trjobj =  follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
+	cout<<"planned T="<<T<<", actual T="<<trjobj.t <<endl;
+	return trjobj;
 }
 
 TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
