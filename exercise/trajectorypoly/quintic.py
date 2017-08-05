@@ -1,28 +1,24 @@
 import numpy as np
 
-# TODO - complete this function
 def JMT(start, end, T):
     """
-    Calculate the Jerk Minimizing Trajectory that connects the initial state
-    to the final state in time T.
-
-    INPUTS
-
-    start - the vehicles start location given as a length three array
-        corresponding to initial values of [s, s_dot, s_double_dot]
-
-    end   - the desired end state for vehicle. Like "start" this is a
-        length three array.
-
-    T     - The duration, in seconds, over which this maneuver should occur.
-
-    OUTPUT 
-    an array of length 6, each value corresponding to a coefficent in the polynomial 
-    s(t) = a_0 + a_1 * t + a_2 * t**2 + a_3 * t**3 + a_4 * t**4 + a_5 * t**5
-
-    EXAMPLE
-
-    > JMT( [0, 10, 0], [10, 10, 0], 1)
-    [0.0, 10.0, 0.0, 0.0, 0.0, 0.0]
+    Calculates Jerk Minimizing Trajectory for start, end and T.
     """
-    return [1,2,3,4,5,6]
+    a_0, a_1, a_2 = start[0], start[1], start[2] / 2.0
+    c_0 = a_0 + a_1 * T + a_2 * T**2
+    c_1 = a_1 + 2* a_2 * T
+    c_2 = 2 * a_2
+    
+    A = np.array([
+            [  T**3,   T**4,    T**5],
+            [3*T**2, 4*T**3,  5*T**4],
+            [6*T,   12*T**2, 20*T**3],
+        ])
+    B = np.array([
+            end[0] - c_0,
+            end[1] - c_1,
+            end[2] - c_2
+        ])
+    a_3_4_5 = np.linalg.solve(A,B)
+    alphas = np.concatenate([np.array([a_0, a_1, a_2]), a_3_4_5])
+    return alphas

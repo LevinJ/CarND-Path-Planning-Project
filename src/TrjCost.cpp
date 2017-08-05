@@ -109,10 +109,12 @@ double nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
 	const vector<double> &s_coeffs = traj.s_coeff;
 	const vector<double> &d_coeffs = traj.d_coeff;
 	double t = traj.t;
+
+
 	for(int i=0; i< 100; i++){
 		double cur_t = float(i) / 100 * t;
 		double cur_s = to_equation(s_coeffs, cur_t);
-		double cur_d = to_equation(d_coeffs, cur_d);
+		double cur_d = to_equation(d_coeffs, cur_t);
 		std::vector<double> v_state = vehicle.state_in(cur_t);
 
 		double targ_s = v_state[0];
@@ -144,7 +146,7 @@ double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int
 		}
 	}
 	if(verbose){
-		cout<<"closest vid="<< closest_vehicle_id <<endl;
+		cout<<"closest vid="<< closest_vehicle_id <<", distance="<<closest<<endl;
 	}
 	return closest;
 

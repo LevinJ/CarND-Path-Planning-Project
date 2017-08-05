@@ -27,7 +27,7 @@
 	double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose=false);
 
 	double nearest_approach(const TrjObject &traj, const Vehicle &vehicle);
-	double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions);
+	double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose);
 	std::vector<double> differentiate(const std::vector<double> &coefficients);
 	double to_equation(const std::vector<double> &coefficients, double t);
 

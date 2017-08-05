@@ -147,7 +147,7 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 		trj.s_coeff = JMT(start_s, trj.s_goal, trj.t);
 		trj.d_coeff = JMT(start_d, trj.d_goal, trj.t);
 		if(g_debugtrj){
-			cout<<"###trjid="<<count<<", intended gap="<<trj.intended_gap<<endl;
+			cout<<"###trjid="<<count<<", intended gap="<<trj.intended_gap<<", intended duration="<<trj.t<<endl;
 		}
 
 
