@@ -25,12 +25,14 @@ Behavior::~Behavior() {
 
 BehvStates Behavior::update_state(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		std::map<int, Vehicle> &predictions){
-	return BehvStates::KL;
+//	return BehvStates::KL;
 	static bool firsttime = true;
 	if(firsttime){
 		//make sure the car go in straight for line the first few seconds
 		firsttime = false;
 		m_clock.reset();
+//		m_last_state = BehvStates::LCL;
+//		return BehvStates::LCL;
 		m_last_state = BehvStates::KL;
 		return BehvStates::KL;
 	}

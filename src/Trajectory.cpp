@@ -20,7 +20,7 @@ using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-static bool g_debugtrj = false;
+extern bool g_debugtrj;
 template <typename T>
 std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
 {
@@ -165,7 +165,9 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 	}else{
 		best.baccident = false;
 	}
-
+	if(!g_debugtrj){
+		calculate_cost(best, predictions, true);
+	}
 	return best;
 }
 
@@ -359,11 +361,6 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 		//if we have leading vehicle, check whether it's within safe distance
 		double cur_distance = predictions[leading_id].start_state[0] - start_s[0];
 		if (cur_distance < SAFE_DISTANCE_BUFFER){
-			//let's increase the gap in a stable/gradual fashion
-			//			double deta_distance = cur_distance + 10;
-			//			if(deta_distance >SAFE_DISTANCE_BUFFER){
-			//				deta_distance = SAFE_DISTANCE_BUFFER;
-			//			}
 			//make sure we do not change lanes
 			double delta_d = get_lane_dist(get_lane_num(start_d[0])) - predictions[leading_id].start_state[3];
 			vector<double> delta = {0, 0,0,delta_d,0,0};
@@ -414,16 +411,12 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 	if(leading_id !=-1){
 		//if we have leading vehicle, check whether it's within safe distance
 		double cur_distance = predictions[leading_id].start_state[0] - start_s[0];
-		if (cur_distance < SAFE_DISTANCE_BUFFER + 5){
+		if (cur_distance < SAFE_DISTANCE_BUFFER){
 			//let's increase the gap in a stable/gradual fashion
-			double deta_distance = cur_distance + 10;
-			if(deta_distance >SAFE_DISTANCE_BUFFER){
-				deta_distance = SAFE_DISTANCE_BUFFER;
-			}
 			//make sure we change to the center of the other lane
 			double target_lane_dist = predictions[leading_id].start_state[3];
 			double delta_d = get_lane_dist(get_lane_num(target_lane_dist)) - target_lane_dist;
-			vector<double> delta = {-deta_distance, 0,0,delta_d,0,0};
+			vector<double> delta = {0, 0,0,delta_d,0,0};
 
 
 			TrjObject trjobj = follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);

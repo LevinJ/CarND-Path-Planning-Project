@@ -13,7 +13,7 @@ using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-
+bool g_debugtrj = true;
 int main() {
 
 	Trajectory trj;
@@ -24,24 +24,16 @@ int main() {
 	//keep lane
 
 	std::map<int, Vehicle> predictions;
-	predictions[3] = Vehicle({4914.85, 17.3248, 0, 6.02401, 0, 0, });
 
-
-//	predictions[0] = Vehicle({5086.83, 20.0965, 0, 10.3737, 0, 0, });
-//	predictions[1] = Vehicle({4783.18, 20.9676, 0, 6.19801, 0, 0, });
-//	predictions[2] = Vehicle({4902.15, 18.6779, 0, 9.67319, 0, 0, });
-//	predictions[3] = Vehicle({4914.85, 17.3248, 0, 6.02401, 0, 0, });
-//	predictions[4] = Vehicle({4750.67, 17.8621, 0, 2.39262, 0, 0, });
-//	predictions[5] = Vehicle({4775.35, 16.7066, 0, 2.12721, 0, 0, });
-//	predictions[6] = Vehicle({4849.37, 21.3008, 0, 6.30517, 0, 0, });
-//	predictions[7] = Vehicle({4933.6, 17.1547, 0, 6.56412, 0, 0, });
-//	predictions[8] = Vehicle({4873.87, 18.81, 0, 6.11818, 0, 0, });
-//	predictions[9] = Vehicle({4798.29, 16.5046, 0, 2.20831, 0, 0, });
-//	predictions[10] = Vehicle({4819.7, 20.1545, 0, 6.00302, 0, 0, });
-
-
-
-	vector<double> start_s = {4899.11, 19.1133, -0.546801}; vector<double> start_d = {6, 1.74294e-15, 1.48012e-17};
+	vector<double> start_s = {125.014, 0.706152, 1.42045, }; vector<double> start_d = {6.16221, -0.0106847, -0.0243536, };
+	predictions[0] = Vehicle({45.6794, 21.5652, 0, 6.09133, 0, 0, });
+	predictions[1] = Vehicle({256.727, 17.9005, 0, 1.96267, 0, 0, });
+	predictions[2] = Vehicle({73.0529, 22.8169, 0, 1.98959, 0, 0, });
+	predictions[3] = Vehicle({285.815, 17.7483, 0, 10.0259, 0, 0, });
+	predictions[4] = Vehicle({285.402, 20.6783, 0, 2.0232, 0, 0, });
+	predictions[5] = Vehicle({251.178, 21.0037, 0, 9.98537, 0, 0, });
+	predictions[6] = Vehicle({285.049, 46.2814, 0, 9.99988, 0, 0, });
+	predictions[7] = Vehicle({70.4752, 52.1038, 0, 6.00001, 0, 0, });
 
 	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
 

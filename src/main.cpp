@@ -11,7 +11,7 @@
 #include "TrjMgr.h"
 
 using namespace std;
-
+bool g_debugtrj = false;
 // for convenience
 using json = nlohmann::json;
 

@@ -13,7 +13,7 @@
 
 using namespace std;
 
-
+extern bool g_debugtrj;
 /*
    Penalizes trajectories that span a duration which is longer or
    shorter than the duration requested.
@@ -128,13 +128,23 @@ double nearest_approach(const TrjObject &traj, const Vehicle &vehicle){
 /*
   Calculates the closest distance to any vehicle during a trajectory.
  */
-double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int, Vehicle> &predictions){
+double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int,
+		Vehicle> &predictions, bool verbose){
 	double closest = INFINITY;
+	int closest_vehicle_id = -1;
 	for (const auto& kv : predictions) {
+		if(kv.second.start_state[1] > SPEED_LIMIT + 8){
+			//ignore those robot cars that are going in crazy speed
+			continue;
+		}
 		double d = nearest_approach(traj, kv.second);
 		if(d < closest){
 			closest = d;
+			closest_vehicle_id = kv.first;
 		}
+	}
+	if(verbose){
+		cout<<"closest vid="<< closest_vehicle_id <<endl;
 	}
 	return closest;
 
@@ -143,7 +153,7 @@ double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int
  *  Binary cost function which penalizes collisions.
  */
 double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
-	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
+	double nearest = nearest_approach_to_any_vehicle(traj, predictions, verbose);
 	if(nearest < 2*VEHICLE_RADIUS){
 		if(verbose){
 			cout<<"Error:  collision_cost,nearest "<< nearest <<endl;
@@ -159,7 +169,7 @@ double collision_cost(const TrjObject &traj, const std::map<int, Vehicle> &predi
  */
 
 double buffer_cost(const TrjObject &traj, const std::map<int, Vehicle> &predictions, bool verbose){
-	double nearest = nearest_approach_to_any_vehicle(traj, predictions);
+	double nearest = nearest_approach_to_any_vehicle(traj, predictions, false);
 	return logistic(2*VEHICLE_RADIUS / nearest);
 }
 
@@ -245,7 +255,7 @@ double max_accel_cost(const TrjObject &traj, const std::map<int, Vehicle> &predi
 	}
 
 	auto max_acc = std::max_element(std::begin(all_as), std::end(all_as));
-	if(verbose){
+	if(g_debugtrj){
 		cout<<"max_acc="<< *max_acc <<endl;
 	}
 	if (abs(*max_acc) > MAX_ACCEL){
@@ -299,7 +309,7 @@ double max_jerk_cost(const TrjObject &traj, const std::map<int, Vehicle> &predic
 	}
 
 	auto max_jerk = std::max_element(std::begin(all_jerks), std::end(all_jerks));
-	if(verbose){
+	if(g_debugtrj){
 		cout<<"max_jerk="<< *max_jerk <<endl;
 	}
 	if (abs(*max_jerk) > MAX_JERK){
