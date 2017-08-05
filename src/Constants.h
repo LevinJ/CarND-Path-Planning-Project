@@ -27,7 +27,7 @@ const float MIN_SPEED = 0;
 const float EXPECTED_JERK_IN_ONE_SEC = 2;// # m/s/s
 const float EXPECTED_ACC_IN_ONE_SEC = 1;// # m/s
 
-const float SPEED_LIMIT = 22;
+const float SPEED_LIMIT = 20.75;
 const float VEHICLE_RADIUS = 1.5;// # model vehicle as circle to simplify collision detection
 const float COLLISION_DISTANCE = 3;
 //for the sake of safe driving, we should apply 3 seconds rules

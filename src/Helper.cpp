@@ -9,6 +9,9 @@
 #include <math.h>
 #include "Constants.h"
 #include "TrjCost.h"
+#include <sys/time.h>
+
+
 std::ostream& operator<< (std::ostream& out, const TrjObject& trj) {
 	out<<"s_coeff "<<trj.s_coeff<<endl;
 	out<<"d_coeff "<<trj.d_coeff<<endl;
@@ -87,4 +90,19 @@ double logistic(double x){
 
 	return 2.0 / (1 + exp(-x)) - 1.0;
 
+}
+
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime() {
+	timeval curTime;
+	gettimeofday(&curTime, NULL);
+	int milli = curTime.tv_usec / 1000;
+
+	char buffer [80];
+	strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", localtime(&curTime.tv_sec));
+
+	char currentTime[84] = "";
+	sprintf(currentTime, "%s:%d", buffer, milli);
+
+    return currentTime;
 }

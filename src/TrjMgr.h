@@ -36,7 +36,7 @@ private:
 	vector<vector<double>> m_last_waypoints_d;
 	std::vector<std::vector<double>> get_start_state(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
 			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
-	std::map<int, Vehicle> get_predictons(const std::vector<std::vector<double>> &sensor_fusion, double start_s);
+	std::map<int, Vehicle> get_predictons(const std::vector<std::vector<double>> &sensor_fusion, double start_s,const std::vector<double> &car_state);
 	void convert_next_waypoints(const TrjObject &trjobj);
 	Trajectory m_trajectory;
 

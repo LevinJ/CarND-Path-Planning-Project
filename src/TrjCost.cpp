@@ -135,8 +135,8 @@ double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int
 	double closest = INFINITY;
 	int closest_vehicle_id = -1;
 	for (const auto& kv : predictions) {
-		if(kv.second.start_state[1] > SPEED_LIMIT + 8){
-			//ignore those robot cars that are going in crazy speed
+		if(get_lane_num(kv.second.start_state[3]) == get_lane_num(traj.d_coeff[0]) && kv.second.start_state[0] < traj.s_coeff[0]){
+			//ignore those robot cars that are in the sane lane line as us and are behind us
 			continue;
 		}
 		double d = nearest_approach(traj, kv.second);

@@ -159,7 +159,7 @@ TrjObject Trajectory::PTG(const std::vector<double> &start_s, const std::vector<
 		}
 		count++;
 	}
-	cout<<"#####best trjid=" << best_count<< ", min cost ="<<min_cost<<", intended gap="<<best.intended_gap<<"\nbest trj="<<best<<endl;
+	cout<<"best trjid=" << best_count<< ", min cost ="<<min_cost<<", intended gap="<<best.intended_gap<<"\nbest trj="<<best<<endl;
 	if(min_cost >=100){
 		best.baccident = true;
 	}else{

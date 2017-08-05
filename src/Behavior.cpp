@@ -9,6 +9,7 @@
 #include <cmath>
 #include<iostream>
 
+
 using namespace std;
 
 Behavior::Behavior() {
@@ -65,6 +66,9 @@ BehvStates Behavior::update_state(const std::vector<double> &start_s, const std:
 	cout<<"min_cost_state="<<min_cost_state<<endl;
 	if(min_cost_state == BehvStates::LCL || min_cost_state == BehvStates::LCR){
 		m_clock.reset();
+	}
+	if(m_last_state != min_cost_state){
+		cout<<"lane change instruction: lane="<<get_lane_num(start_d[0])<<" "<< min_cost_state<<endl;
 	}
 	m_last_state = min_cost_state;
 	return min_cost_state;

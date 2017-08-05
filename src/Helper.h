@@ -107,6 +107,9 @@ int	get_lane_num(double d);
 double get_lane_dist(int lane_id);
 double logistic(double x);
 
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime();
+
 class Helper {
 public:
 	Helper();
