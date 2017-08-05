@@ -29,7 +29,9 @@ public:
 	vector<double> m_maps_dx;
 	vector<double> m_maps_dy;
 private:
-
+	bool handle_lane_change(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
+			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d,
+			const std::vector<std::vector<double>> &sensor_fusion);
 	vector<double> convert_sd_to_xy(const double s, const double d);
 
 	vector<vector<double>> m_last_waypoints_s;
@@ -47,6 +49,7 @@ private:
 			const std::vector<double> &previous_path_y,double end_path_s,double end_path_d);
 	vector<double> getFrenet_Q(double x, double y, double theta);
 	Behavior m_behavior;
+	BehvStates m_current_sate;
 
 };
 

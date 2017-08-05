@@ -45,9 +45,10 @@ const int All_POINTS_NUM = 150;
 const double MAX_S = 6945.554;
 
 const double FRONT_GAP_THRESH = 15.0;
-const double BACK_GAP_THRESH = SAFE_DISTANCE_BUFFER;
+const double BACK_GAP_THRESH = 45;
 
-const double LAST_LC_ELAPSED_COST_THRES = 3000; //milliseconds
+//the lane change itself will take about 3 seconds, we want the car to stay in a lane for at leeast 3 seconds.
+const double LAST_LC_ELAPSED_COST_THRES = 3000+ 3000; //milliseconds
 
 
 

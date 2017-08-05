@@ -74,7 +74,7 @@ int NextWaypoint(double x, double y, double theta, vector<double> maps_x, vector
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
 vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x, vector<double> maps_y)
-																		{
+																						{
 	int next_wp = NextWaypoint(x,y, theta, maps_x,maps_y);
 
 	int prev_wp;
@@ -119,11 +119,11 @@ vector<double> getFrenet(double x, double y, double theta, vector<double> maps_x
 
 	return {frenet_s,frenet_d};
 
-																		}
+																						}
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
 vector<double> getXY(double s, double d, const vector<double> &maps_s, const vector<double> &maps_x, const vector<double> &maps_y)
-																		{
+																						{
 	int prev_wp = -1;
 
 	while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) ))
@@ -147,7 +147,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 	return {x,y};
 
-																		}
+																						}
 
 TrjMgr::TrjMgr(const vector<double> &maps_s, const vector<double> &maps_x, vector<double> &maps_y,
 		const vector<double> &maps_dx, const vector<double> &maps_dy) {
@@ -162,6 +162,7 @@ TrjMgr::TrjMgr(const vector<double> &maps_s, const vector<double> &maps_x, vecto
 	m_dx_spline.set_points(m_maps_s, m_maps_dx);
 	m_dy_spline.set_points(m_maps_s, m_maps_dy);
 	m_last_waypoints_num = 0;
+	m_current_sate = BehvStates::KL;
 
 }
 
@@ -176,6 +177,10 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	static int loop = 1;
 
 	cout<<"###loop "<< loop++<<","<<currentDateTime()<<endl;
+	if(handle_lane_change(car_state, previous_path_x,previous_path_y,
+			end_path_s, end_path_d,sensor_fusion)){
+		return;
+	}
 
 	std::vector<std::vector<double>> start_state = get_start_state(car_state, previous_path_x,
 			previous_path_y, end_path_s, end_path_d);
@@ -185,6 +190,7 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	double T = 5;
 
 	BehvStates suggested_state = m_behavior.update_state(start_s, start_d, predictions);
+	m_current_sate = suggested_state;
 
 	TrjObject trjobj;
 	if (suggested_state == BehvStates::LCL){
@@ -195,6 +201,7 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	}
 	if(suggested_state == BehvStates::KL || trjobj.baccident){
 		trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
+		m_current_sate = BehvStates::KL;
 	}
 	convert_next_waypoints(trjobj);
 
@@ -339,7 +346,7 @@ void TrjMgr::convert_next_waypoints(const TrjObject &trjobj){
 	int count = All_POINTS_NUM - m_last_waypoints_s.size();
 	for(int i=0; i< count; i++){
 		if(cur_t > t){
-			cout<<"unexpected, All_POINTS_NUM being set is too big "<<All_POINTS_NUM<<endl;
+			cout<<"All_POINTS_NUM being is a bit too big for this round"<<All_POINTS_NUM<<endl;
 			break;
 		}
 		double cur_s = to_equation(s_coeff, cur_t);
@@ -384,4 +391,50 @@ vector<double> TrjMgr::convert_sd_to_xy(const double s, const double d){
 	const double y = y_edge + dy * d;
 
 	return {x, y};
+}
+
+bool TrjMgr::handle_lane_change(const std::vector<double> &car_state, const std::vector<double> &previous_path_x,
+		const std::vector<double> &previous_path_y,double end_path_s,double end_path_d,
+		const std::vector<std::vector<double>> &sensor_fusion){
+	if(m_current_sate == BehvStates::KL){
+		//always generate new trajectory when in kl state
+		return false;
+	}
+
+	if(previous_path_x.size() < 50){
+		//most of existing trajectory has been consumed, let's generate new trajectory
+		return false;
+	}
+	int consume_num =  m_last_waypoints_num - previous_path_x.size();
+
+	//remove consumed waypoints
+	vector<vector<double>> temp_s;
+	vector<vector<double>> temp_d;
+	for(int i=0; i<m_last_waypoints_num; i++){
+		if(i<consume_num){
+			//already consumed by the simulator, skip them
+			continue;
+		}
+		temp_s.push_back(m_last_waypoints_s[i]);
+		temp_d.push_back(m_last_waypoints_d[i]);
+	}
+
+
+	m_last_waypoints_s = temp_s;
+	m_last_waypoints_d = temp_d;
+	m_last_waypoints_num = m_last_waypoints_s.size();
+	m_next_x_vals = {};
+	m_next_y_vals = {};
+	for(int i=0; i< m_last_waypoints_s.size(); i++){
+		double cur_s = m_last_waypoints_s[i][0];
+		double cur_d = m_last_waypoints_d[i][0];
+		//		vector<double> xy = getXY_Q(cur_s, cur_d);
+		vector<double> xy = convert_sd_to_xy(cur_s, cur_d);
+		m_next_x_vals.push_back(xy[0]);
+		m_next_y_vals.push_back(xy[1]);
+		//		cout<<"cur_s, cur_d "<<cur_s<<","<<cur_d<<endl;
+	}
+	cout<<"consumed="<< consume_num <<", remain="<<m_last_waypoints_num<<"previous_path_x.size()"<<previous_path_x.size()<<endl;
+	return true;
+
 }
