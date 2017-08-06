@@ -76,7 +76,7 @@ double lane_change_cost(const Vehicle & vehicle, BehvStates state, BehvCostData 
 		//we don't want lanes to be frequently changed
 		bool bchange_again = (state != data.last_state);
 		if(bchange_again){
-			if(data.last_LC_elapsed_duration < 4000){
+			if(data.last_LC_elapsed_duration < LAST_LC_ELAPSED_COST_THRES){
 				return 1;
 			}
 		}

@@ -25,23 +25,23 @@ int main() {
 
 	std::map<int, Vehicle> predictions;
 
-
-	vector<double> start_s = {129.132, 6.73314, 7.29003, }; vector<double> start_d = {6.11447, -0.0482957, -0.0123691, };
-	predictions[0] = Vehicle({101.831, 21.1753, 0, 2.01398, 0, 0, });
-	predictions[1] = Vehicle({275.205, 15.7204, 0, 5.97234, 0, 0, });
-	predictions[2] = Vehicle({67.5644, 19.7889, 0, 6.03594, 0, 0, });
-	predictions[3] = Vehicle({312.555, 19.2712, 0, 5.56338, 0, 0, });
-	predictions[4] = Vehicle({99.4751, 22.1513, 0, 6.00266, 0, 0, });
-	predictions[5] = Vehicle({273.109, 18.0787, 0, 9.9603, 0, 0, });
-	predictions[6] = Vehicle({300.796, 17.0899, 0, 10.0451, 0, 0, });
-	predictions[7] = Vehicle({90.8618, 23.0049, 0, 9.98642, 0, 0, });
-	predictions[8] = Vehicle({263.729, 11.197, 0, 5.95275, 0, 0, });
-	predictions[9] = Vehicle({56.9801, 23.33, 0, 2.11558, 0, 0, });
-	predictions[10] = Vehicle({54.309, 21.0447, 0, 10.11, 0, 0, });
-	predictions[11] = Vehicle({292.499, 13.9132, 0, 6.03964, 0, 0, });
+	vector<double> start_s = {6933.3, 7.9119, -5.04495, }; vector<double> start_d = {2, 4.02057e-16, -1.14638e-17, };
+	predictions[0] = Vehicle({7005.42, 16.2835, 0, 2.09041, 0, 0, });
+	predictions[1] = Vehicle({6949.54, 15.3966, 0, 6.10177, 0, 0, });
+	predictions[2] = Vehicle({6910.25, 5.21082, 0, 2.29903, 0, 0, });
+	predictions[3] = Vehicle({104.722, 17.3744, 0, 6.00703, 0, 0, });
+	predictions[4] = Vehicle({6875.11, 17.9586, 0, 1.96471, 0, 0, });
+	predictions[5] = Vehicle({6895.92, 9.65587, 0, 2.87882, 0, 0, });
+	predictions[6] = Vehicle({6871.69, 17.7541, 0, 6.05127, 0, 0, });
+	predictions[7] = Vehicle({6974.01, 16.3704, 0, 5.94928, 0, 0, });
+	predictions[8] = Vehicle({6992.92, 16.6258, 0, 10.0224, 0, 0, });
+	predictions[9] = Vehicle({6923.18, 21.394, 0, 6.22278, 0, 0, });
+	predictions[10] = Vehicle({76.0971, 14.9739, 0, 9.99647, 0, 0, });
+	predictions[11] = Vehicle({100.122, 16.5653, 0, 9.99908, 0, 0, });
 
 
 	TrjObject best = trj.keep_lane(start_s, start_d, T, predictions);
+//	TrjObject best = trj.LC(start_s, start_d, T, predictions, true);
 
 
 	//lane change

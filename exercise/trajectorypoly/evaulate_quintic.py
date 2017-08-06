@@ -58,18 +58,60 @@ def show_trajectory(s_coeffs, T):
         s_list.append(s(t))
         t_list.append(t)
         t += 0.25
+    plt.figure()
     plt.plot(t_list, s_list, label="sdc")
 
     plt.legend()
-    plt.show()
+#     plt.show()
+def differentiate(coefficients):
+    """
+    Calculates the derivative of a polynomial and returns
+    the corresponding coefficients.
+    """
+    new_cos = []
+    for deg, prev_co in enumerate(coefficients[1:]):
+        new_cos.append((deg+1) * prev_co)
+    return new_cos
+SPEED_LIMIT = 22
+    
+def exceeds_speed_limit_cost(s, T):
+    
+    
+    speed = differentiate(s)
+   
+    speed = to_equation(speed)
+#     all_speeds = [speed(float(t)/100 * i) for i in range(100)]
+    all_speeds = []
+    t_list = []
+    t = 0
+    while t <= T+0.01:
+        all_speeds.append(speed(t))
+        t_list.append(t)
+        t += 0.02
+    
+    max_speed = max(all_speeds)
+    min_speed = min(all_speeds)
+    
+    if max_speed <= SPEED_LIMIT and min_speed>= MIN_SPEED:
+        print("ok speed")
+    else:
+        print("max_v={}, min_v={}".format(max_speed, min_speed))
+    plt.figure()
+    plt.plot(t_list, all_speeds, label="speed")
+    plt.legend()
+#     plt.show()
+    
  
 def main():
-    start = [8.42264, 0.996988, -0.243736,]
-    end = [10, 0, 0]
+    
     T = 5
+    start = [124.834, 0, 0]
+    end = [237.334, 22, 0]
     jmt = JMT(start, end, T)
     print(jmt)
+    exceeds_speed_limit_cost(jmt, T)
     show_trajectory(jmt, T)
+    plt.show()
 # 	for test_case, answer in zip(TEST_CASES, ANSWERS):
 # 		start, end, T = test_case
 # 		jmt = JMT(start, end, T)

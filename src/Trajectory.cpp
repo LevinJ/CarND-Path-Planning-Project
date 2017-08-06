@@ -36,7 +36,7 @@ std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
 
 
 Trajectory::Trajectory() {
-	m_cost_map["time_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
+//	m_cost_map["time_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
 	m_cost_map["s_diff_cost"] = CostFuncWeight(&s_diff_cost, 8);
 	//	m_cost_map["d_diff_cost"] = CostFuncWeight(&d_diff_cost, 1);
 	m_cost_map["max_jerk_cost"] = CostFuncWeight(&max_jerk_cost, 100);
@@ -214,13 +214,13 @@ std::vector<TrjObject> Trajectory::perturb_goals(const std::vector<double> &star
 	std::vector<TrjObject> all_trjs = {};
 
 	if(target_vehicle == -1){
-		//if we do not follow any vehicle, we purturb the t only
-		//this is because we may not be able to reach speed limit with given T
-		double timestep = 0.5;
-		double t = T - 4 * timestep;
-		while(t <= T + 4 * timestep){
-			all_trjs.push_back(TrjObject(goal_s,goal_d,t,goal_s,goal_d, T, -1));
-			t = t + timestep;
+		//reduce s a bit to avoid possible collision with leading cars
+		double gap_s = 0;
+		while(gap_s <= 50){
+			vector<double> purturbed_goal_s = goal_s;
+			purturbed_goal_s[0] = purturbed_goal_s[0] - gap_s;
+			all_trjs.push_back(TrjObject(purturbed_goal_s,goal_d,T,goal_s,goal_d, T, gap_s));
+			gap_s += 5;
 		}
 
 		return all_trjs;
@@ -367,7 +367,7 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 			cout<<"trj: keep lane, has target "<<leading_id<<", target vehicle state="<<predictions[leading_id].start_state<<endl;
 
 			TrjObject trjobj =  follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
-			cout<<"old distance="<<cur_distance<<", new distance="<<(predictions[leading_id].state_in(T)[0] - trjobj.s_goal[0]) <<endl;
+			cout<<"old distance="<<cur_distance<<", new distance="<<trjobj.intended_gap <<endl;
 			if(cur_distance <= 10){
 				cout<<"hmm, kind of emergency here."<<endl;
 			}
@@ -376,17 +376,15 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 	}
 
 	//follow a reasonably set goal
-	double avg_speed = (SPEED_LIMIT + start_s[1])/2;
-	if (avg_speed > SPEED_LIMIT){
-		avg_speed = SPEED_LIMIT;
-	}
-	cout<<"trj: keep lane, no target, "<<avg_speed<<endl;
-	vector<double> goal_s = {s+ avg_speed*T, SPEED_LIMIT, 0};
+	double planed_a = (SPEED_LIMIT - start_s[1])/T;
+
+	cout<<"trj: keep lane, no target, "<<planed_a<<endl;
+	vector<double> goal_s = {start_s[0]+ start_s[1]*T + 0.5*planed_a*T*T, SPEED_LIMIT, 0};
 
 
 	vector<double> goal_d = {get_lane_dist(get_lane_num(start_d[0])),0,0};
 	TrjObject trjobj =  follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
-	cout<<"planned T="<<T<<", actual T="<<trjobj.t <<endl;
+	cout<<"old distance="<<0<<", new distance="<< trjobj.intended_gap <<endl;
 	return trjobj;
 }
 
@@ -422,21 +420,20 @@ TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<d
 			TrjObject trjobj = follow_vehicle(start_s, start_d, T, leading_id, delta,  predictions);
 			string trjres = trjobj.baccident ? " failure" : " success";
 			cout<<"trj: "<<lc_action_str<<", has target "<<leading_id<<" delta, "<<delta<<trjres<<endl;
+			cout<<"old distance="<<cur_distance<<", new distance="<< trjobj.intended_gap <<endl;
 			return trjobj;
 		}
 	}
 
-	//follow a reasonably set goal
-	double avg_speed = (SPEED_LIMIT + start_s[1])/2;
-	if (avg_speed > SPEED_LIMIT){
-		avg_speed = SPEED_LIMIT;
-	}
-	vector<double> goal_s = {start_s[0]+ avg_speed*T, SPEED_LIMIT, 0};
+	//follow a reasonably set goal, namely reach the speed limit by T seconds
+	double planed_a = (SPEED_LIMIT - start_s[1])/T;
+	vector<double> goal_s = {start_s[0]+ start_s[1]*T + 0.5*planed_a*T*T, SPEED_LIMIT, 0};
 	vector<double> goal_d = {get_lane_dist(target_lane_id),0,0};
 
 	TrjObject trjobj = follow_goal(start_s, start_d, T, goal_s, goal_d,  predictions);
 	string trjres = trjobj.baccident ? " failure" : " success";
-	cout<<"trj: "<<lc_action_str<< "no target, "<<avg_speed<<trjres<<endl;
+	cout<<"trj: "<<lc_action_str<< "no target, "<<planed_a<<trjres<<endl;
+	cout<<"old distance="<<0<<", new distance="<< trjobj.intended_gap <<endl;
 	return trjobj;
 
 

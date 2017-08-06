@@ -251,7 +251,7 @@ std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<doub
 			closetsid = pred_count;
 		}
 		std::vector<double> start_state = {new_s, s_dot, 0, d, 0, 0};
-		cout<<"vehicle s="<< s<<endl;
+//		cout<<"vehicle s="<< s<<endl;
 		cout<<"predictions["<<pred_count++<<"] = Vehicle("<<start_state<<");"<<endl;
 		predictions[v_id] = Vehicle(start_state);
 	}
