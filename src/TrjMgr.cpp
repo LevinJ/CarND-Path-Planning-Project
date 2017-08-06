@@ -177,10 +177,10 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	static int loop = 1;
 
 	cout<<"###loop "<< loop++<<","<<currentDateTime()<<endl;
-	if(handle_lane_change(car_state, previous_path_x,previous_path_y,
-			end_path_s, end_path_d,sensor_fusion)){
-		return;
-	}
+//	if(handle_lane_change(car_state, previous_path_x,previous_path_y,
+//			end_path_s, end_path_d,sensor_fusion)){
+//		return;
+//	}
 
 	std::vector<std::vector<double>> start_state = get_start_state(car_state, previous_path_x,
 			previous_path_y, end_path_s, end_path_d);
@@ -190,7 +190,7 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	double T = 5;
 
 	BehvStates suggested_state = m_behavior.update_state(start_s, start_d, predictions);
-	m_current_sate = suggested_state;
+//	m_current_sate = suggested_state;
 
 	TrjObject trjobj;
 	if (suggested_state == BehvStates::LCL){
@@ -199,9 +199,10 @@ void TrjMgr::generate_next_waypoints(const std::vector<double> &car_state, const
 	if (suggested_state == BehvStates::LCR){
 		trjobj = m_trajectory.LC(start_s, start_d,T, predictions, false);
 	}
-	if(suggested_state == BehvStates::KL || trjobj.baccident){
+	if(suggested_state == BehvStates::KL){
+//	if(suggested_state == BehvStates::KL || trjobj.baccident){
 		trjobj = m_trajectory.keep_lane(start_s, start_d, T, predictions);
-		m_current_sate = BehvStates::KL;
+//		m_current_sate = BehvStates::KL;
 	}
 	convert_next_waypoints(trjobj);
 

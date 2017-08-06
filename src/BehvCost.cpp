@@ -9,8 +9,11 @@
 #include "Helper.h"
 #include "Constants.h"
 #include <cmath>
+#include<iostream>
 
-static int get_target_laneid(const Vehicle & vehicle, BehvStates state){
+using namespace std;
+
+int get_target_laneid(const Vehicle & vehicle, BehvStates state){
 	int cur_lane_id = get_lane_num(vehicle.start_state[3]);
 	int target_lane_id = cur_lane_id;
 	if(state == BehvStates::LCL){
@@ -67,16 +70,28 @@ double lane_collision_cost(const Vehicle & vehicle, BehvStates state, BehvCostDa
 	return 1;
 }
 double lane_change_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
-	if(state == BehvStates::KL){
-		return 0;
+	//penalize frequent lane changing
+	cout<<"elapse time = "<<data.last_LC_elapsed_duration<<endl;
+	if(data.last_state == BehvStates::KL){
+		//we don't want lanes to be frequently changed
+		bool bchange_again = (state != data.last_state);
+		if(bchange_again){
+			if(data.last_LC_elapsed_duration < 4000){
+				return 1;
+			}
+		}
 	}
-	if (data.last_state == BehvStates::LCL || data.last_state == BehvStates::LCR){
-		return 0;
+
+	return 0;
+}
+
+double lane_change_resoluteness_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
+	if(data.last_state == BehvStates::LCL || data.last_state == BehvStates::LCR){
+		int target_lane_id = get_target_laneid(vehicle, state);
+		if(target_lane_id != data.last_intended_laneid){
+			return 1;
+		}
 	}
-	if(data.last_LC_elapsed_duration > LAST_LC_ELAPSED_COST_THRES){
-		return 0;
-	}
-	//we don't want lanes to be frequently changed
-	return 1;
+	return 0;
 }
 

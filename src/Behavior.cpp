@@ -8,6 +8,7 @@
 #include "Behavior.h"
 #include <cmath>
 #include<iostream>
+#include <algorithm>
 
 
 using namespace std;
@@ -16,7 +17,9 @@ Behavior::Behavior() {
 	m_cost_map["lane_speed_cost"] = BehvCostFuncWeight(&lane_speed_cost, 1);
 	m_cost_map["lane_collision_cost"] = BehvCostFuncWeight(&lane_collision_cost, 10);
 	m_cost_map["lane_change_cost"] = BehvCostFuncWeight(&lane_change_cost, 10);
+	m_cost_map["lane_change_resoluteness_cost"] = BehvCostFuncWeight(&lane_change_resoluteness_cost, 100);
 	m_last_state = BehvStates::KL;
+	m_last_intended_laneid = 1;
 }
 
 Behavior::~Behavior() {
@@ -24,34 +27,54 @@ Behavior::~Behavior() {
 
 }
 
+vector<BehvStates> Behavior::get_all_states(const std::vector<double> &start_d){
+	vector<BehvStates> states = {};
+	int cur_lane_id = get_lane_num(start_d[0]);
+
+	switch(m_last_state){
+	case BehvStates::KL:
+		states = {BehvStates::KL, BehvStates::LCL, BehvStates::LCR};
+		break;
+	case BehvStates::LCL:
+		states = {BehvStates::KL, BehvStates::LCL};
+		break;
+	case BehvStates::LCR:
+		states = {BehvStates::KL, BehvStates::LCR};
+		break;
+	}
+	//remove impossible lane selection
+
+	switch(cur_lane_id){
+	case 0:
+		//remove LCR
+		states.erase(std::remove(states.begin(), states.end(), BehvStates::LCR), states.end());
+		break;
+	case 2:
+		//remove LCL
+		states.erase(std::remove(states.begin(), states.end(), BehvStates::LCL), states.end());
+		break;
+	case 1:
+		break;
+	default:
+		cout<<"Error: unexpected lane num="<< cur_lane_id <<endl;
+	}
+
+	return states;
+
+}
+
 BehvStates Behavior::update_state(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		std::map<int, Vehicle> &predictions){
-//	return BehvStates::KL;
 	static bool firsttime = true;
 	if(firsttime){
-		//make sure the car go in straight for line the first few seconds
 		firsttime = false;
 		m_clock.reset();
-//		m_last_state = BehvStates::LCL;
-//		return BehvStates::LCL;
-		m_last_state = BehvStates::KL;
-		return BehvStates::KL;
 	}
-	vector<BehvStates> states = {};
+
+	vector<BehvStates> states = get_all_states(start_d);
+
 	Vehicle  vehicle({start_s[0], start_s[1], start_s[2], start_d[0], start_d[1], start_d[2]});
-	int cur_lane_id = get_lane_num(vehicle.start_state[3]);
-	if(cur_lane_id == 0){
-		//remove LCR
-		states = {BehvStates::KL, BehvStates::LCL};
-	} else if(cur_lane_id == 2){
-		//remove LCL
-		states = {BehvStates::KL,  BehvStates::LCR};
-	}else if (cur_lane_id == 1){
-		states = {BehvStates::KL, BehvStates::LCL, BehvStates::LCR};
-	}else{
-		cout<<"Error: unexpected lane num "<< cur_lane_id <<endl;
-		return BehvStates::KL;
-	}
+
 	BehvCostData data = compute_behv_cost_data(vehicle, predictions);
 	double min_cost = INFINITY;
 	BehvStates min_cost_state = BehvStates::KL;
@@ -64,13 +87,13 @@ BehvStates Behavior::update_state(const std::vector<double> &start_s, const std:
 		}
 	}
 	cout<<"min_cost_state="<<min_cost_state<<endl;
-	if(min_cost_state == BehvStates::LCL || min_cost_state == BehvStates::LCR){
-		m_clock.reset();
-	}
 	if(m_last_state != min_cost_state){
+		m_last_state = min_cost_state;
+		m_last_intended_laneid = get_target_laneid(vehicle, m_last_state);
+		m_clock.reset();
 		cout<<"lane change instruction: lane="<<get_lane_num(start_d[0])<<" "<< min_cost_state<<endl;
 	}
-	m_last_state = min_cost_state;
+
 	return min_cost_state;
 
 
@@ -115,8 +138,7 @@ BehvCostData Behavior::compute_behv_cost_data(const Vehicle & vehicle, std::map<
 			leading_vehicles[lane_id] = v;
 		}
 	}
-
-	BehvCostData data(vehicle, predictions, leading_vehicles, m_last_state, m_clock.elapsed());
+	BehvCostData data(vehicle, predictions, leading_vehicles, m_last_state, m_clock.elapsed(), m_last_intended_laneid);
 	return data;
 }
 

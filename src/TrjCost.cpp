@@ -137,6 +137,9 @@ double nearest_approach_to_any_vehicle(const TrjObject &traj, const std::map<int
 	for (const auto& kv : predictions) {
 		if(get_lane_num(kv.second.start_state[3]) == get_lane_num(traj.d_coeff[0]) && kv.second.start_state[0] < traj.s_coeff[0]){
 			//ignore those robot cars that are in the sane lane line as us and are behind us
+			//the reason we used a very simple model to predict other traffic and so might be inaccurate at all.
+			//besides, generally speaking, the car behind us is supposed to do its utmost to avoid collision
+			//in reality, I do think we need to consider the cars behind us in real life traffic.
 			continue;
 		}
 		double d = nearest_approach(traj, kv.second);
