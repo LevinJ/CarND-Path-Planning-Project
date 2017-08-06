@@ -400,7 +400,7 @@ TrjObject Trajectory::keep_lane(const std::vector<double> &start_s, const std::v
 TrjObject Trajectory::LC(const std::vector<double> &start_s, const std::vector<double> &start_d,
 		double T, std::map<int, Vehicle> &predictions, bool left){
 
-	int target_lane_id = left ? get_lane_num(start_d[0]) + 1 :  get_lane_num(start_d[0]) - 1;
+	int target_lane_id = left ? get_lane_num(start_d[0]) - 1 :  get_lane_num(start_d[0]) + 1;
 	string lc_action_str = left ? " LCL " : " LCR ";
 	double distance = INFINITY;
 	int leading_id = -1;

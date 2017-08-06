@@ -17,9 +17,9 @@ int get_target_laneid(const Vehicle & vehicle, BehvStates state){
 	int cur_lane_id = get_lane_num(vehicle.start_state[3]);
 	int target_lane_id = cur_lane_id;
 	if(state == BehvStates::LCL){
-		target_lane_id = cur_lane_id + 1;
+		target_lane_id = cur_lane_id - 1;
 	}else if (state == BehvStates::LCR){
-		target_lane_id = cur_lane_id -1;
+		target_lane_id = cur_lane_id +1;
 	}
 	return target_lane_id;
 

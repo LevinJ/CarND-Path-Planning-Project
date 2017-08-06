@@ -45,11 +45,11 @@ vector<BehvStates> Behavior::get_all_states(const std::vector<double> &start_d){
 	//remove impossible lane selection
 
 	switch(cur_lane_id){
-	case 0:
+	case 2:
 		//remove LCR
 		states.erase(std::remove(states.begin(), states.end(), BehvStates::LCR), states.end());
 		break;
-	case 2:
+	case 0:
 		//remove LCL
 		states.erase(std::remove(states.begin(), states.end(), BehvStates::LCL), states.end());
 		break;
