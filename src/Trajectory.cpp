@@ -36,7 +36,7 @@ std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
 
 
 Trajectory::Trajectory() {
-//	m_cost_map["time_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
+	//	m_cost_map["time_diff_cost"] = CostFuncWeight(&time_diff_cost, 1);
 	m_cost_map["s_diff_cost"] = CostFuncWeight(&s_diff_cost, 8);
 	//	m_cost_map["d_diff_cost"] = CostFuncWeight(&d_diff_cost, 1);
 	m_cost_map["max_jerk_cost"] = CostFuncWeight(&max_jerk_cost, 100);
@@ -47,6 +47,7 @@ Trajectory::Trajectory() {
 	m_cost_map["total_accel_cost"] = CostFuncWeight(&total_accel_cost, 1);
 	m_cost_map["exceeds_speed_limit_cost"] = CostFuncWeight(&exceeds_speed_limit_cost, 100);
 	m_cost_map["stays_on_road_cost"] = CostFuncWeight(&stays_on_road_cost, 100);
+	m_cur_car_speed = 0;
 }
 
 Trajectory::~Trajectory() {
@@ -219,6 +220,10 @@ std::vector<TrjObject> Trajectory::perturb_goals(const std::vector<double> &star
 		while(gap_s <= 50){
 			vector<double> purturbed_goal_s = goal_s;
 			purturbed_goal_s[0] = purturbed_goal_s[0] - gap_s;
+			if(m_cur_car_speed >= 22.3){
+				purturbed_goal_s[1] -= 2;
+				cout<<"reached critical speed, slow down a bit"<<endl;
+			}
 			all_trjs.push_back(TrjObject(purturbed_goal_s,goal_d,T,goal_s,goal_d, T, gap_s));
 			gap_s += 5;
 		}
@@ -242,6 +247,10 @@ std::vector<TrjObject> Trajectory::perturb_goals(const std::vector<double> &star
 		if(purturbed_goal_s[1] > SPEED_LIMIT){
 			//make sure we do not exceed speed limit when following vehicles
 			purturbed_goal_s[1] = SPEED_LIMIT;
+		}
+		if(m_cur_car_speed >= 22.3){
+			purturbed_goal_s[1] -= 2;
+			cout<<"reached critical speed, slow down a bit"<<endl;
 		}
 		vector<double> purturbed_goal_d = {target_vehicle_state[3] + delta[3],
 				target_vehicle_state[4]+delta[4],target_vehicle_state[5]+delta[5]};

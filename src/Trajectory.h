@@ -39,6 +39,7 @@ public:
 			double T, std::map<int, Vehicle> &predictions, bool left= true);
 	double calculate_cost(const TrjObject &trajectory,  const std::map<int, Vehicle> &predictions,
 				bool verbose=false);
+	double m_cur_car_speed;
 
 private:
 

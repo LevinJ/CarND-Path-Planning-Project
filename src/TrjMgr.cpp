@@ -229,10 +229,10 @@ std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<doub
 			continue;
 		}
 
-		if(start_s <=MAX_S && start_s >= MAX_S - 2*SAFE_DISTANCE_BUFFER){
+		if(start_s <=MAX_S && start_s >= MAX_S - 300){
 			//if JMT start point happens to be at the last segment of the lap
 			//change traffic position accordingly so that leading vehicle can be properly detected
-			if(s>=0 && s<SAFE_DISTANCE_BUFFER){
+			if(s>=0){
 				cout << "last segment of the lap, adjust vehicle position, vehilce id="<< v_id
 						<<", s="<< s << " , new_s="<< s + MAX_S<<endl;
 				s = s + MAX_S;
@@ -268,6 +268,8 @@ std::vector<std::vector<double>> TrjMgr::get_start_state(const std::vector<doubl
 	double car_speed = car_state[5];
 	//from miles/hour to meter/s
 	car_speed = (car_speed * 1609.34)/3600;
+
+	m_trajectory.m_cur_car_speed = car_speed;
 
 	//get starting point from car param
 	vector<double> start_s = {car_s,car_speed,0};
