@@ -232,7 +232,7 @@ std::map<int, Vehicle> TrjMgr::get_predictons(const std::vector<std::vector<doub
 		if(start_s <=MAX_S && start_s >= MAX_S - 300){
 			//if JMT start point happens to be at the last segment of the lap
 			//change traffic position accordingly so that leading vehicle can be properly detected
-			if(s>=0){
+			if(s>=0  && s<=300){
 				cout << "last segment of the lap, adjust vehicle position, vehilce id="<< v_id
 						<<", s="<< s << " , new_s="<< s + MAX_S<<endl;
 				s = s + MAX_S;
