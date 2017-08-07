@@ -15,7 +15,7 @@ we are provided with the car's localization, sensor fusion data, as well as high
 ## Valid Trajectories Checklist  
 
 * The car is able to drive at least 4.32 miles without incident  
-In the video above, the cars drived 4.59 miles without any accident.
+In the video above, the cars drived 4.59 miles without any accident.  
 
 * The car drives according to the speed limit.  
 The car does not drive beyond speed limit and always try driving around speed limit if possible. This is acheived by the trajectory layer. See Implementation section for more details.
