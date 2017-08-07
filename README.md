@@ -10,27 +10,27 @@ we are provided with the car's localization, sensor fusion data, as well as high
 
 [Here](https://youtu.be/VhpZXRPkfrs) is the video that demonstrates the vehicle guided by our path planner successfully drives around the track in the simulator.
 
-![mpc](./mpc.png)
+![path planner](./path_planner.png)
 
 ## Valid Trajectories Checklist  
 
-###The car is able to drive at least 4.32 miles without incident..
+* The car is able to drive at least 4.32 miles without incident  
 In the video above, the cars drives 5.59 miles without any accident.
 
-###The car drives according to the speed limit.
+* The car drives according to the speed limit.  
 The car does not drive beyond speed limit and always try driving around speed limit if possible. This is acheived by the trajectory layer. See Implementation section for more details.
 
-###Max Acceleration and Jerk are not Exceeded.
+* Max Acceleration and Jerk are not Exceeded.  
 During the driving, max acceleration and jerk are not exceeded. This is again achieved by the trajectory layer. See Implementation section for more details.
 
-###Car does not have collisions.
+* Car does not have collisions.  
 
 No collisions occur in the video. This is achieved by collaboration from predictions, behavior and trajectory layer. See Implementation section for more details.
 
-###The car stays in its lane, except for the time between changing lanes.
+* The car stays in its lane, except for the time between changing lanes.  
 The car always stays in the center of the lane, except during lane chaning. This is achieved by the behavior layer. Its state changing FSM ensure the car does not move outside of valid lanes.
 
-###The car is able to change lanes
+* The car is able to change lanes  
 The car would change lanes when it's appropriate. The decision making is guided by the behavior layer.See Implementation section for more details.
 
 
@@ -51,16 +51,16 @@ Behavior layer suggests driving strategy and pass it to trajectory layer, based 
 
 This part is implemented in Behavior.cpp and BehavCost.cpp files.
 
-In this project, the car could be in three states: Keep lane, lane change left, lane change right. We have to consider a lot of factors when choosing the state, like will we go faster after choosing a state, will it collide with other cars, is it comfortable for passengers?  Here we use a series of cost function to balance these sometimes conflicting requirements and select the state with minimal cost. To be specific, blow cost functions are applied.
+In this project, the car could be in three states: keep lane, lane change left, lane change right. We have to consider a lot of factors when choosing the state, like will we go faster after choosing a state, will it collide with other cars, will it be  comfortable for passengers?  Here we use a series of cost function to balance these sometimes conflicting requirements and select the state with minimal cost. To be specific, below cost functions are applied.
 
-1.	Lane speed cost
+1.	Lane speed cost  
 This is to prevent the car from going to lanes with leading car whose speed is very slow.
-2.	Lane collision cost
+2.	Lane collision cost  
 This is to prevent the car from making moves that might collide with other cars
-3.	Lane change cost
+3.	Lane change cost  
 This is to prevent the car from changing the lanes too frequently.
-4.	Lane change resoluteness cost
-This one is very interesting. It is to reward the car to have resolute lane change. That is to say, once the car starts a lane change move, it’s better that it should stick with decision and complete the lane change. Otherwise sometimes the car might move like a drunk man, start moving to the left lane, and then half way through, decides to abort the decision and revert back.  
+4.	Lane change resoluteness cost  
+This one is very interesting. It is to reward the car to have resolute lane change. That is to say, once the car starts a lane change move, it’s better that it should stick with decision and complete the lane change. Otherwise sometimes the car might move like a drunk man, start moving to the left lane, and then half way through, decides to abort the decision and revert back.    
 
 ```
 double lane_change_resoluteness_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
@@ -80,16 +80,16 @@ Trajectory layer generates optimal waypoints for the car to follow, based on sen
 
 This part is implemented in TrjMgr.cpp, Trajectory.cpp, and TrjCost.cpp.
 
-Jerk Minimizing Trajectoris(JMT) is used to generate most comfortable trajectory from starting point (s_start, s_dot_start, s_dot_dot_start, d_start, d_dot_start, d_dot_dot_start) to ending point (s_end, s_dot_end, s_dot_dot_end, d_end, d_dot_end, d_dot_dot_end.).
+Jerk Minimizing Trajectoris(JMT) is used to generate most possibly comfortable trajectory from starting point (s_start, s_dot_start, s_dot_dot_start, d_start, d_dot_start, d_dot_dot_start) to ending point (s_end, s_dot_end, s_dot_dot_end, d_end, d_dot_end, d_dot_dot_end.).
 
-As we’ve already known the starting point via localization data, the problem now is to find the appropriate ending points and send it to JMT. Behavior layer does provide some hints on the ending point, like which lane the ending point should be in, but trajectory has to figure out a lot of details on its own, like what s_end to use.
+As we’ve already known the starting point via localization data, the problem now is to find the appropriate ending points and send it to JMT. Behavior layer does provide some hints on the ending point, like which lane the ending point should be in, but trajectory layer has to figure out a lot of details on its own, like what s_end to use.
 
 In this project, Trajectory layer specifies a certain number of candidate ending points and then use cost functions to select the best ending point (correspondingly the best trajectory).
 
-For example, say we decide to follow a vehicle right before us in the same lane, we are 60 meters behind the leading car, and we deem 70 meters distance to be an ideal safe distance. Normally we would want our car to 70 meters behind the leading car in our next path planning. But if the leading car comes to a full stop, 70 meters would be a bad idea, as it basically asks our car to drive backward, which is barely feasible and more dangerous than just hitting the leading car. On the other side, if the leading car is driving very fast and our car currently is driving very slowly, we might exceed speed limit if we still go for 70 meters gap. In this case, the solution is to try from 5 to 100 gap distance meters and see which one is best, kind of brute force computation and but is a very effective method to handle various complicated scenarios that might occur. 
+For example, say we decide to follow a vehicle right before us in the same lane, we are 60 meters behind the leading car, and we deem 70 meters distance to be an ideal safe distance. Normally we would want our car to 70 meters behind the leading car in our next path planning. But if the leading car comes to a full stop, 70 meters would be a bad idea, as it basically asks our car to drive backward, which is barely feasible and more dangerous than just hitting the leading car. On the other side, if the leading car is driving very fast and our car currently is driving very slowly, we might exceed speed limit if we still go for 70 meters gap. In this case, our solution is to try from 5 to 100 gap distance meters and see which one is best, kind of brute force computation and but is a very effective method to handle various complicated scenarios that might occur. 
 
 In this project, the cost functions used to select best trajectory are implemented in TrjCost.cpp, and includes:
-* s_diff_cost
+* s_diff_cost  
 Penalizes trajectories whose s coordinate (and derivatives) differ from the goal.
 * collision_cost
 * exceeds_speed_limit_cost
