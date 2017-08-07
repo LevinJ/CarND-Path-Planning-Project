@@ -24,8 +24,7 @@ The car does not drive beyond speed limit and always try driving around speed li
 During the driving, max acceleration and jerk are not exceeded. This is again achieved by the trajectory layer. See Implementation section for more details.
 
 * Car does not have collisions.  
-
-No collisions occur in the video. This is achieved by collaboration from predictions, behavior and trajectory layer. See Implementation section for more details.
+No collisions occur in the video. This is achieved by collaboration from predictions, behavior and trajectory layer. See Implementation section for more details.  
 
 * The car stays in its lane, except for the time between changing lanes.  
 The car always stays in the center of the lane, except during lane chaning. This is achieved by the behavior layer. Its state changing FSM ensure the car does not move outside of valid lanes.
