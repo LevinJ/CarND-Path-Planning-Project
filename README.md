@@ -30,7 +30,7 @@ No collisions occur in the video. This is achieved by collaboration from predict
 The car always stays in the center of the lane, except during lane chaning. This is achieved by the behavior layer. Its state changing FSM ensure the car does not move outside of valid lanes.
 
 * The car is able to change lanes  
-The car would change lanes when it's appropriate. The decision making is guided by the behavior layer.See Implementation section for more details.
+The car would change lanes when it's appropriate. The decision making is guided by the behavior layer. See Implementation section for more details.
 
 
 ## Implementations
@@ -59,7 +59,7 @@ This is to prevent the car from making moves that might collide with other cars
 3.	Lane change cost  
 This is to prevent the car from changing the lanes too frequently.
 4.	Lane change resoluteness cost  
-This one is very interesting. It is to reward the car to have resolute lane change. That is to say, once the car starts a lane change move, it’s better that it should stick with decision and complete the lane change. Otherwise sometimes the car might move like a drunk man, start moving to the left lane, and then half way through, decides to abort the decision and revert back.    
+This one is very interesting. It is to reward the car to have resolute lane change. That is to say, once the car starts a lane change move, it’s better that it should stick with the decision and complete the lane change. Otherwise sometimes the car might move like a drunk man, start moving to the left lane, and then half way through, decides to abort the decision and revert back.    
 
 ```
 double lane_change_resoluteness_cost(const Vehicle & vehicle, BehvStates state, BehvCostData &data){
