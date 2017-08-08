@@ -50,7 +50,6 @@ private:
 	std::vector<TrjObject> perturb_goals(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
 			std::vector<double> &goal_s, std::vector<double> &goal_d,
 			int target_vehicle, const std::vector<double> &delta, std::map<int, Vehicle> &predictions);
-//	std::vector<std::vector<double>> perturb_goal(const std::vector<double> &goal_s, const std::vector<double> &goal_d);
 	TrjObject follow_goal(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
 			std::vector<double> &goal_s, std::vector<double> &goal_d,  std::map<int, Vehicle> &predictions);
 	TrjObject follow_vehicle(const std::vector<double> &start_s, const std::vector<double> &start_d, double T,
