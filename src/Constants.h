@@ -28,7 +28,7 @@ const float EXPECTED_JERK_IN_ONE_SEC = 2;// # m/s/s
 const float EXPECTED_ACC_IN_ONE_SEC = 1;// # m/s
 
 const double HARD_SPEED_LIMIT = 22.352; // 50mph in m/s
-const float SPEED_LIMIT = 21;
+const float SPEED_LIMIT = 47 * 1609.34/3600 ;  //47 mph
 const float VEHICLE_RADIUS = 1.5;// # model vehicle as circle to simplify collision detection
 const float COLLISION_DISTANCE = 3;
 //for the sake of safe driving, we should apply 3 seconds rules
@@ -46,7 +46,7 @@ const int All_POINTS_NUM = 150;
 const double MAX_S = 6945.554;
 
 const double FRONT_GAP_THRESH = 50.0;
-const double BACK_GAP_THRESH = 15;
+const double BACK_GAP_THRESH = 25;
 
 //we want the car to stay in a lane for at least LAST_LC_ELAPSED_COST_THRES seconds.
 const double LAST_LC_ELAPSED_COST_THRES = 6000; //milliseconds

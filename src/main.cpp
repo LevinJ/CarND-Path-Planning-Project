@@ -44,13 +44,14 @@ int main() {
 	vector<double> map_waypoints_dy;
 
 	// Waypoint map to read from
-	string map_file_ = "../data/highway_map.csv";
+	string map_file_ = "../data/highway_map_bosch1.csv";
 	// The max s value before wrapping around the track back to 0
 	double max_s = 6945.554 + 5000;  //no need to handle the loop for bosch
 
 	ifstream in_map_(map_file_.c_str(), ifstream::in);
 
 	string line;
+	float last_s = -1;
 	while (getline(in_map_, line)) {
 		istringstream iss(line);
 		double x;
@@ -63,11 +64,16 @@ int main() {
 		iss >> s;
 		iss >> d_x;
 		iss >> d_y;
+		if(s <= last_s){
+			break;
+		}
 		map_waypoints_x.push_back(x);
 		map_waypoints_y.push_back(y);
 		map_waypoints_s.push_back(s);
 		map_waypoints_dx.push_back(d_x);
 		map_waypoints_dy.push_back(d_y);
+
+		last_s = s;
 	}
 	// add extra waypoint to loop back to the beginning with overlap...
 	//This way we can have a a relatively smooth/accurate spline extrapolation around the end of the lap
